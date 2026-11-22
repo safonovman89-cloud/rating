@@ -3,12 +3,13 @@
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 import sys
-from threading import Event, Thread
+from threading import Condition, Thread
+from time import monotonic
 from urllib.request import urlopen
 
 from .dataset import InputError, load_dataset, validate_dataset
 from .postgres import RatingMissing, StoreError
-from .ria import PILOT, SOURCE_URL, expanded_payload
+from .ria import PILOT, RIA_ID, SOURCE_URL, expanded_payload
 
 
 def download_ria_page():
@@ -39,11 +40,33 @@ def refresh_ria(store, read_page=download_ria_page):
     return "updated"
 
 
+def _record_check(store, started, trigger, outcome, error=None):
+    try:
+        store.record_refresh(RIA_ID, datetime.now(timezone.utc), trigger, outcome,
+                             int((monotonic() - started) * 1000), error)
+    except StoreError as failure:
+        print(f"Не удалось записать проверку РИА в журнал: {failure}", file=sys.stderr, flush=True)
+
+
+def run_ria_check(store, trigger, read_page=download_ria_page):
+    started = monotonic()
+    try:
+        outcome = refresh_ria(store, read_page)
+    except (InputError, OSError, StoreError) as error:
+        _record_check(store, started, trigger, "error", str(error)[:500])
+        raise
+    _record_check(store, started, trigger, outcome)
+    return outcome
+
+
 class RiaRefresh:
     def __init__(self, operation, interval):
         self.operation = operation
         self.interval = interval
-        self._stop = Event()
+        self._condition = Condition()
+        self._pending = "scheduled"
+        self._running = False
+        self._closed = False
         self._thread = Thread(target=self._run, name="ria-refresh", daemon=True)
         self._status = {
             "enabled": True, "state": "waiting", "checked_at": None, "last_success_at": None,
@@ -51,29 +74,48 @@ class RiaRefresh:
         }
 
     def status(self):
-        return self._status.copy()
+        with self._condition:
+            return {**self._status, "running": self._running or self._pending is not None}
+
+    def request_check(self):
+        with self._condition:
+            if self._closed or self._pending or self._running:
+                return False
+            self._pending = "manual"
+            self._condition.notify()
+            return True
 
     def start(self):
         self._thread.start()
 
     def stop(self):
-        self._stop.set()
+        with self._condition:
+            self._closed = True
+            self._condition.notify()
         self._thread.join()
 
     def _run(self):
-        while not self._stop.is_set():
+        while True:
+            with self._condition:
+                self._condition.wait_for(lambda: self._pending or self._closed, timeout=self.interval)
+                if self._closed:
+                    return
+                trigger = self._pending or "scheduled"
+                self._pending = None
+                self._running = True
             error = None
             try:
-                state = self.operation()
+                state = self.operation(trigger)
             except (InputError, OSError, StoreError) as failure:
                 state, error = "error", str(failure)
             now = datetime.now(timezone.utc)
             checked = now.isoformat()
-            self._status = {
-                "enabled": True, "state": state, "checked_at": checked, "error": error,
-                "last_success_at": self._status["last_success_at"] if state == "error" else checked,
-                "next_check_at": (now + timedelta(seconds=self.interval)).isoformat(),
-            }
+            with self._condition:
+                self._status = {
+                    "enabled": True, "state": state, "checked_at": checked, "error": error,
+                    "last_success_at": self._status["last_success_at"] if state == "error" else checked,
+                    "next_check_at": (now + timedelta(seconds=self.interval)).isoformat(),
+                }
+                self._running = False
             outcome = {"updated": "срезы загружены", "unchanged": "источник проверен, изменений нет", "error": error}[state]
             print(f"РИА {checked} · {outcome}", file=sys.stderr, flush=True)
-            self._stop.wait(self.interval)

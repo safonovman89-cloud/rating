@@ -58,17 +58,18 @@ def _database(args):
             store.save(dataset)
             print(f"Загружен рейтинг {dataset.rating_id}. Срезов: {len(dataset.snapshots)}.")
         elif args.command == "refresh-ria":
-            from .refresh import refresh_ria
+            from .refresh import run_ria_check
 
-            state = refresh_ria(store)
+            state = run_ria_check(store, "cli")
             print("Срезы РИА загружены." if state == "updated" else "Источник РИА проверен, изменений нет.")
         elif args.command == "mcp":
             from .mcp import run_mcp
 
             run_mcp(store, args.rating_id)
         else:
+            from .admin import configured_admin
             from .ai import configured_provider
-            from .refresh import RiaRefresh, refresh_ria
+            from .refresh import RiaRefresh, run_ria_check
             from .ria import RIA_ID
             from .server import make_server
 
@@ -76,9 +77,10 @@ def _database(args):
             if args.refresh_ria is not None:
                 if args.rating_id != RIA_ID or not 1 <= args.refresh_ria <= 8760:
                     raise InputError("--refresh-ria применяется к рейтингу РИА с интервалом от 1 до 8760 часов")
-                worker = RiaRefresh(lambda: refresh_ria(store), args.refresh_ria * 3600)
-            with make_server(store, args.rating_id, args.port, configured_provider(),
-                             refresh_status=worker.status if worker else None) as server:
+                worker = RiaRefresh(lambda trigger: run_ria_check(store, trigger), args.refresh_ria * 3600)
+            with make_server(store, args.rating_id, args.port, configured_provider(), admin=configured_admin(),
+                             refresh_status=worker.status if worker else None,
+                             refresh_request=worker.request_check if worker else None) as server:
                 print(f"И16 открыт по адресу http://127.0.0.1:{server.server_port}/", flush=True)
                 if worker:
                     worker.start()

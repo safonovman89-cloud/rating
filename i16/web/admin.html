@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>И16 · Панель администратора</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/admin/app.js" defer></script>
+</head>
+<body class="has-executive">
+  <header class="hero">
+    <div class="wrap">
+      <p class="kicker">И16</p>
+      <h1>Панель администратора</h1>
+    </div>
+  </header>
+  <main class="wrap">
+    <a href="/">Вернуться к рейтингу</a>
+    <section class="admin-panel" aria-labelledby="admin-refresh-title">
+      <h2 id="admin-refresh-title">Обновление рейтинга РИА</h2>
+      <dl class="admin-status">
+        <dt>Состояние</dt><dd id="admin-state">Загрузка…</dd>
+        <dt>Последняя проверка</dt><dd id="admin-checked">—</dd>
+        <dt>Следующая проверка</dt><dd id="admin-next">—</dd>
+      </dl>
+      <p id="admin-detail" class="note" hidden></p>
+      <button type="button" id="admin-refresh" disabled>Проверить сейчас</button>
+      <p id="admin-feedback" role="status"></p>
+    </section>
+    <section class="admin-analytics" aria-labelledby="admin-analytics-title">
+      <h2 id="admin-analytics-title">Аналитика данных и загрузок</h2>
+      <p id="admin-analytics-status" role="status">Загрузка аналитики…</p>
+      <div id="admin-analytics-content" hidden>
+        <dl class="executive-metrics admin-metrics" aria-label="Данные в базе">
+          <div class="executive-metric"><dt>Регионы в справочнике</dt><dd id="admin-region-count"></dd></div>
+          <div class="executive-metric"><dt>Выпуски в базе</dt><dd id="admin-snapshot-count"></dd></div>
+          <div class="executive-metric"><dt>Загруженные наблюдения</dt><dd id="admin-observation-count"></dd></div>
+        </dl>
+        <h3 id="admin-coverage-heading">Покрытие выпусков</h3>
+        <p id="admin-no-snapshots" class="note" hidden>Выпуски ещё не загружены.</p>
+        <div id="admin-coverage-table" class="table-area" role="region" aria-labelledby="admin-coverage-heading" tabindex="0">
+          <table aria-labelledby="admin-coverage-heading">
+            <thead><tr><th scope="col">Выпуск</th><th scope="col">Опубликован</th><th scope="col">Загружено</th><th scope="col">Место и балл</th><th scope="col">Без места</th><th scope="col">Без балла</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="note">Пропуски места и балла считаются среди загруженных строк.</p>
+        <h3 id="admin-history-heading">Проверки источника</h3>
+        <p id="admin-history-summary"></p>
+        <p id="admin-no-runs" class="note" hidden>Записей о проверках пока нет.</p>
+        <div id="admin-history-table" class="table-area" role="region" aria-labelledby="admin-history-heading" tabindex="0">
+          <table aria-labelledby="admin-history-heading">
+            <thead><tr><th scope="col">Завершена</th><th scope="col">Запуск</th><th scope="col">Исход</th><th scope="col">Длительность</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

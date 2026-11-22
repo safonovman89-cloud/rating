@@ -2,6 +2,7 @@
 
 from contextlib import ExitStack, contextmanager, redirect_stderr
 import asyncio
+from datetime import datetime, timedelta, timezone
 from itertools import chain, repeat
 import json
 import os
@@ -18,10 +19,11 @@ from uuid import uuid4
 from psycopg import connect, sql
 from psycopg.conninfo import make_conninfo
 
+from i16.admin import admin_credentials
 from i16.ai import configured_provider
 from i16.dataset import load_dataset
 from i16.postgres import Postgres
-from i16.refresh import RiaRefresh, refresh_ria
+from i16.refresh import RiaRefresh, run_ria_check
 from i16.server import make_server
 
 
@@ -47,8 +49,8 @@ def isolated_database():
 
 
 @contextmanager
-def server(connection, rating_id, provider=None, *, refresh_status=None):
-    with make_server(Postgres(connection), rating_id, 0, provider, refresh_status=refresh_status) as http:
+def server(connection, rating_id, provider=None, **options):
+    with make_server(Postgres(connection), rating_id, 0, provider, **options) as http:
         thread = Thread(target=http.serve_forever, daemon=True)
         thread.start()
         try:
@@ -121,7 +123,7 @@ def test_periodic_refresh(connection, source):
     incomplete = original.replace(NOVOSIBIRSK_ROW, "", 1)
     pages = chain((original, original), repeat(incomplete))
     store = Postgres(connection)
-    worker = RiaRefresh(lambda: refresh_ria(store, lambda: next(pages)), .4)
+    worker = RiaRefresh(lambda trigger: run_ria_check(store, trigger, lambda: next(pages)), .4)
     with server(connection, RIA_ID, refresh_status=worker.status) as address:
         worker.start()
         try:
@@ -203,6 +205,7 @@ def prepare_database(connection, scratch):
     by_subject = {row["subject_id"]: row for row in zero["snapshots"][0]["rows"]}
     by_subject["demo-c"].update(rank=None, score=0)
     by_subject["demo-b"]["score"] = None
+    zero["snapshots"][1]["rows"] = [row for row in zero["snapshots"][1]["rows"] if row["subject_id"] != "demo-d"]
     save(connection, scratch, zero)
 
     scale = fixture(ria, "ria-e2e-scale")
@@ -228,6 +231,12 @@ def wrong_variant(facts):
 
 def provider_offline(_):
     raise OSError("I16 test provider unavailable")
+
+
+def admin_test_refresh(store, trigger):
+    sleep(1)
+    store.record_refresh(RIA_ID, datetime.now(timezone.utc), trigger, "unchanged", 1000, None)
+    return "unchanged"
 
 
 def live_provider():
@@ -271,6 +280,17 @@ def main():
             if live:
                 configurations["live"] = (RIA_ID, live)
             urls = {key: stack.enter_context(server(connection, *args)) for key, args in configurations.items()}
+            store = Postgres(connection)
+            store.record_refresh(RIA_ID, datetime.now(timezone.utc) - timedelta(days=31), "cli", "updated", 5, None)
+            credentials = admin_credentials("test-admin", "test-admin-password")
+            worker = RiaRefresh(lambda trigger: admin_test_refresh(store, trigger), 60)
+            urls["admin"] = stack.enter_context(server(
+                connection, RIA_ID, admin=credentials,
+                refresh_status=worker.status, refresh_request=worker.request_check,
+            ))
+            urls["adminPartial"] = stack.enter_context(server(connection, "demo-e2e-zero", admin=credentials))
+            worker.start()
+            stack.callback(worker.stop)
             unavailable = make_conninfo(LOCAL_DSN, port=1)
             urls["databaseOffline"] = stack.enter_context(server(unavailable, "demo-rating"))
             result = subprocess.run(

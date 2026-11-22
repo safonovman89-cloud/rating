@@ -61,6 +61,21 @@ python -m i16 serve --rating-id ria-social-economic-regions --port 8016 --refres
 
 Проверка охватывает выпуски 2024–2025 годов. Изменившиеся срезы загружаются после проверки. При сбое сохраняются последние загруженные значения. Для подключения следующего выпуска сначала сверьте его источник, методику, состав рейтинга и контрольные значения.
 
+## Администратор
+
+Укажите `I16_ADMIN_PASSWORD_FILE` при запуске `serve`. Для входа используется пользователь `admin`, его имя можно переопределить через `I16_ADMIN_USER`. Например, из корня проекта создайте файл пароля с правами `0600` и передайте путь приложению:
+
+```sh
+mkdir -p build
+python -c 'import os, secrets; fd = os.open("build/i16-admin-password.txt", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600); os.write(fd, (secrets.token_urlsafe(24) + "\n").encode()); os.close(fd)'
+export I16_ADMIN_PASSWORD_FILE="$PWD/build/i16-admin-password.txt"
+python -m i16 serve --rating-id ria-social-economic-regions --port 8016 --refresh-ria
+```
+
+Откройте [панель администратора](http://127.0.0.1:8016/admin/). Пароль для входа находится в указанном файле. В Postman выберите **Authorization → Basic Auth** и отправьте `POST http://127.0.0.1:8016/admin/api/v1/refresh` с телом `{}` в режиме **Body → raw → JSON**. Ответ `202` означает, что проверка принята, а `409` — что проверка уже выполняется. Для ручного запуска из панели требуется `--refresh-ria`.
+
+Раздел аналитики показывает покрытие выпусков, пропуски и последние проверки источника. История хранится в PostgreSQL и начинается после миграции `002_refresh_history.sql`. В Postman защищённый запрос `GET /admin/api/v1/analytics` возвращает те же показатели.
+
 ## Локальный MCP-сервер
 
 После установки `requirements.txt` запустите как подпроцесс MCP-клиента `python -m i16 mcp --rating-id ria-social-economic-regions` из корня проекта с заданным `DATABASE_URL`. Транспорт — `stdio`. Поддерживаются `get_rating`, `compare_regions` и `get_map_indicators`. Пример конфигурации для клиента, который принимает `mcpServers`:

@@ -390,6 +390,41 @@ test('A31 · карта регионов, показатели и добавле
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 375);
 });
 
+test('A34 · вход администратора и защищённый ручной запуск', async page => {
+  const action = urls.admin + '/admin/api/v1/refresh';
+  const credentials = {username: 'test-admin', password: 'test-admin-password'};
+  const good = `Basic ${Buffer.from(`${credentials.username}:${credentials.password}`).toString('base64')}`;
+  const wrong = `Basic ${Buffer.from(`${credentials.username}:wrong-password`).toString('base64')}`;
+  assert.equal((await page.request.get(urls.ria + '/admin/')).status(), 404);
+  assert.equal((await page.request.get(urls.admin + '/api/v1/rating')).status(), 200);
+  const denied = await page.request.get(urls.admin + '/admin/');
+  assert.equal(denied.status(), 401);
+  assert.match(denied.headers()['www-authenticate'], /^Basic /);
+  assert.equal((await page.request.get(urls.admin + '/admin/', {headers: {Authorization: wrong}})).status(), 401);
+  assert.equal((await page.request.post(action, {data: {}})).status(), 401);
+  assert.equal((await page.request.post(action, {headers: {Authorization: wrong}, data: {}})).status(), 401);
+  assert.equal((await page.request.post(action, {headers: {Authorization: good, Origin: 'https://example.com'}, data: {}})).status(), 403);
+  assert.equal((await page.request.post(action, {headers: {Authorization: good}, data: {unexpected: true}})).status(), 400);
+
+  const context = await browser.newContext({httpCredentials: credentials});
+  try {
+    const admin = await context.newPage();
+    assert.equal((await admin.goto(urls.admin + '/admin')).status(), 200);
+    await admin.getByRole('heading', {name: 'Панель администратора'}).waitFor();
+    const [accepted] = await Promise.all([
+      admin.waitForResponse(response => response.url() === action),
+      admin.getByRole('button', {name: 'Проверить сейчас'}).click(),
+    ]);
+    assert.equal(accepted.status(), 202);
+    assert.deepEqual(await accepted.json(), {accepted: true});
+    assert.equal((await page.request.post(action, {headers: {Authorization: good}, data: {}})).status(), 409);
+    await admin.getByText('Проверка запрошена.', {exact: true}).waitFor();
+    await admin.getByText('Изменений нет', {exact: true}).waitFor();
+  } finally {
+    await context.close();
+  }
+});
+
 if (urls.live) {
   test('T09 · живая модель на публичной выборке РИА', async page => {
     page.setDefaultTimeout(15000);

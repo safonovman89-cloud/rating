@@ -95,6 +95,61 @@ class Postgres:
         except psycopg.Error as error:
             raise StoreError(_database_message(error)) from error
 
+    def record_refresh(self, identifier, checked_at, trigger, outcome, duration_ms, error_message):
+        try:
+            with self._connect() as conn:
+                conn.execute("""
+                    INSERT INTO rating_refresh_runs (rating_id, checked_at, trigger, outcome, duration_ms, error_message)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (identifier, checked_at, trigger, outcome, duration_ms, error_message))
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
+    def admin_analytics(self, identifier):
+        try:
+            with self._connect() as conn:
+                conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+                subject_count = conn.execute(
+                    "SELECT count(*) AS total FROM subjects WHERE rating_id = %s", (identifier,)
+                ).fetchone()["total"]
+                snapshots = conn.execute("""
+                    SELECT s.period, s.published_on, s.population_size,
+                           count(r.subject_id) AS loaded,
+                           count(*) FILTER (WHERE r.rank IS NOT NULL AND r.score IS NOT NULL) AS complete,
+                           count(r.subject_id) FILTER (WHERE r.rank IS NULL) AS missing_rank,
+                           count(r.subject_id) FILTER (WHERE r.score IS NULL) AS missing_score
+                    FROM rating_snapshots s
+                    LEFT JOIN rating_results r ON (s.rating_id, s.period) = (r.rating_id, r.period)
+                    WHERE s.rating_id = %s
+                    GROUP BY s.period, s.published_on, s.population_size
+                    ORDER BY s.period DESC
+                    """, (identifier,)).fetchall()
+                history_summary = conn.execute("""
+                    SELECT count(*) AS total,
+                           count(*) FILTER (WHERE outcome = 'updated') AS updated,
+                           count(*) FILTER (WHERE outcome = 'unchanged') AS unchanged,
+                           count(*) FILTER (WHERE outcome = 'error') AS errors
+                    FROM rating_refresh_runs
+                    WHERE rating_id = %s AND checked_at >= CURRENT_TIMESTAMP - interval '720 hours'
+                    """, (identifier,)).fetchone()
+                recent_runs = conn.execute("""
+                    SELECT checked_at, trigger, outcome, duration_ms, error_message
+                    FROM rating_refresh_runs WHERE rating_id = %s
+                    ORDER BY checked_at DESC, id DESC LIMIT 10
+                    """, (identifier,)).fetchall()
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
+        for row in snapshots:
+            row["published_on"] = row["published_on"].isoformat()
+        for row in recent_runs:
+            row["checked_at"] = row["checked_at"].isoformat()
+        return {
+            "subject_count": subject_count, "snapshot_count": len(snapshots),
+            "observation_count": sum(row["loaded"] for row in snapshots), "snapshots": snapshots,
+            "refresh_summary": history_summary, "recent_runs": recent_runs,
+        }
+
 
 def _database_message(error):
     if error.sqlstate == "42P01":

@@ -3,6 +3,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from .admin import BASIC_CHALLENGE
 from .comparison import compare
 from .dataset import InputError
 from .payloads import comparison_payload, map_payload, payload_json, rating_payload
@@ -45,26 +46,28 @@ def _body_params(body):
     return body.get("period"), subjects, body.get("baseline"), body.get("focus_subject_id")
 
 
-def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=None):
+def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=None, admin=None, refresh_request=None):
     class Handler(BaseHTTPRequestHandler):
-        def _send(self, status, content, media):
+        def _send(self, status, content, media, headers=()):
             self.send_response(status)
             self.send_header("Content-Type", media)
             self.send_header("Content-Length", str(len(content)))
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Cache-Control", "no-store")
+            for name, value in headers:
+                self.send_header(name, value)
             self.end_headers()
             try:
                 self.wfile.write(content)
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
-        def _json(self, status, result):
+        def _json(self, status, result, headers=()):
             message = payload_json(result).encode("utf-8")
-            self._send(status, message, "application/json; charset=utf-8")
+            self._send(status, message, "application/json; charset=utf-8", headers)
 
-        def _error(self, status, code, message):
-            self._json(status, {"error": {"code": code, "message": message}})
+        def _error(self, status, code, message, headers=()):
+            self._json(status, {"error": {"code": code, "message": message}}, headers)
 
         def do_GET(self):
             self._dispatch("GET")
@@ -83,6 +86,10 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
             try:
                 requested = urlsplit(self.path)
                 path = requested.path
+                if path == "/admin" and method == "GET" and admin is not None:
+                    return self._send(308, b"", "text/plain", (("Location", "/admin/"),))
+                if path.startswith("/admin/"):
+                    return self._admin(method, path, requested.query)
                 if method == "GET" and path in STATIC:
                     filename, media = STATIC[path]
                     return self._send(200, (WEB / filename).read_bytes(), media)
@@ -108,6 +115,29 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 return self._error(404, "rating_not_loaded", str(error))
             except StoreError as error:
                 return self._error(503, "database_unavailable", str(error))
+
+        def _admin(self, method, path, query):
+            if admin is None:
+                return self._error(404, "not_found", "Страница не найдена.")
+            if not admin(self.headers.get("Authorization")):
+                return self._error(401, "admin_required", "Требуется вход администратора.",
+                                   (("WWW-Authenticate", BASIC_CHALLENGE),))
+            if method == "GET" and path == "/admin/":
+                return self._send(200, (WEB / "admin.html").read_bytes(), "text/html; charset=utf-8",
+                                  (("X-Frame-Options", "DENY"),))
+            if method == "GET" and path == "/admin/app.js":
+                return self._send(200, (WEB / "admin.js").read_bytes(), "text/javascript; charset=utf-8")
+            if method == "GET" and path == "/admin/api/v1/analytics":
+                return self._json(200, store.admin_analytics(rating_id))
+            if method == "POST" and path == "/admin/api/v1/refresh":
+                if query or self._read_body() != {}:
+                    raise InputError("Для ручной проверки передайте пустой объект JSON без параметров URL")
+                if refresh_request is None:
+                    return self._error(503, "refresh_unavailable", "Обработчик обновления РИА выключен.")
+                if not refresh_request():
+                    return self._error(409, "refresh_running", "Проверка уже запущена.")
+                return self._json(202, {"accepted": True})
+            return self._error(404, "not_found", "Страница не найдена.")
 
         def _comparison(self, params, selector=None):
             period, subjects, baseline, focus = params
