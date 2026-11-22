@@ -26,7 +26,12 @@ STATIC = {
     "/workspace.js": ("workspace.js", "text/javascript; charset=utf-8"),
     "/help.js": ("help.js", "text/javascript; charset=utf-8"),
     "/help-topics.json": ("help-topics.json", "application/json; charset=utf-8"),
+    "/report-photos.json": ("report-photos.json", "application/json; charset=utf-8"),
 }
+STATIC.update({
+    f"/region-photos/{photo.name}": (str(photo.relative_to(WEB)), "image/jpeg")
+    for photo in (WEB / "region-photos").glob("*.jpg")
+})
 
 
 def _query_params(query, *, comparison=False):

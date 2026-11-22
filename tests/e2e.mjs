@@ -145,7 +145,7 @@ test('A17/A18/A22/A23 · пилот РИА, графики, источники �
   assert.deepEqual(await chart(page, /Изменение балла/), ['−3,27', '−4,36']);
   assert.deepEqual(await chart(page, /Изменение места/), ['−1', '−1']);
   assert.deepEqual(await cells(page, 'Разрывы по баллам', 'khmao-yugra'), ['−8,02', '−6,93', '−1,09']);
-  assert.deepEqual(await page.locator('#report a').evaluateAll(items => items.map(item => item.getAttribute('href'))),
+  assert.deepEqual(await page.locator('#report').getByRole('link').evaluateAll(items => items.map(item => item.getAttribute('href'))),
     riaDataset.snapshots.flatMap(({source}) => [source.reference, source.data_reference]));
   assert.match(await page.locator('#report').innerText(), /2025 год[^\n]*15\.06\.2026/);
   assert.match(await page.locator('#report').innerText(), /2024 год[^\n]*23\.06\.2025/);
@@ -311,7 +311,7 @@ test('A28/A30 · первый экран, готовые группы и ист�
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 375);
 });
 
-test('A29 · справка руководителя на одной странице A4', async page => {
+test('A29 · справка руководителя с фото региона на одной странице A4', async page => {
   await page.addInitScript(() => { window.print = () => {}; });
   await ready(page, urls.ria);
   const button = page.getByRole('button', {name: 'Справка на 1 страницу'});
@@ -323,8 +323,13 @@ test('A29 · справка руководителя на одной стран�
   await notice.waitFor({state: 'hidden'});
   assert.ok(await button.isEnabled());
 
-  for (const [variant, rows] of [['pair', 2], ['ural', 5]]) {
-    if (variant === 'ural') await submit(page, page.getByRole('button', {name: 'ЯНАО и УрФО', exact: true}));
+  await page.emulateMedia({media: 'print'});
+  const fullPhoto = page.locator('#report .region-photo img');
+  await fullPhoto.waitFor();
+  assert.equal(await fullPhoto.getAttribute('src'), '/region-photos/yanao.jpg');
+  await page.emulateMedia({media: 'screen'});
+
+  const printCase = async (variant, rows, subject, hasGap = true) => {
     await button.click();
     await page.emulateMedia({media: 'print'});
     const print = page.locator('#executive-print');
@@ -332,16 +337,40 @@ test('A29 · справка руководителя на одной стран�
     assert.equal(await page.locator('#report').isVisible(), false);
     assert.equal(await print.locator('tbody tr').count(), rows);
     assert.equal(await print.locator('tbody tr').filter({hasText: 'Ямало-Ненецкий'}).count(), 1);
-    assert.equal(await print.locator('.plot-value').count(), 2);
-    assert.equal(await print.getByRole('link').count(), 4);
+    assert.equal(await print.locator('.plot-value').count(), hasGap ? 2 : 0);
+    const photo = print.locator('.region-photo');
+    if (subject) {
+      assert.equal(await photo.locator('img').getAttribute('src'), `/region-photos/${subject}.jpg`);
+      assert.ok(await photo.locator('img').evaluate(el => el.complete && el.naturalWidth > 0));
+      assert.match(await photo.locator('figcaption').innerText(), /CC BY/);
+      assert.match(await photo.getByRole('link').first().getAttribute('href'), /^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+    } else {
+      assert.equal(await photo.count(), 0);
+    }
+    assert.equal(await print.getByRole('link').count(), subject ? 6 : 4);
     if (variant === 'ural') assert.match(await print.innerText(), /Показано 5 из 6/);
     const pdf = await page.pdf({path: join(outputDir, `executive-${variant}.pdf`), preferCSSPageSize: true});
     assert.equal(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)?.length, 1);
+    assert.equal(/\/Subtype\s*\/Image\b/.test(pdf.toString('latin1')), Boolean(subject));
     await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
     await print.waitFor({state: 'hidden'});
     assert.ok(await page.locator('#report').isVisible());
     await page.emulateMedia({media: 'screen'});
-  }
+  };
+  await printCase('pair', 2, 'yanao');
+  await submit(page, page.getByRole('button', {name: 'ЯНАО и УрФО', exact: true}));
+  await printCase('ural', 5, 'yanao');
+  await submit(page, page.getByRole('button', {name: 'ЯНАО и Югра', exact: true}));
+  await page.locator('#focus').selectOption('khmao-yugra');
+  await submit(page);
+  await printCase('yugra', 2, 'khmao-yugra');
+  await page.locator('#focus').selectOption('');
+  await submit(page);
+  await printCase('no-focus', 2, 'khmao-yugra', false);
+  await page.route('**/region-photos/yanao.jpg', route => route.abort('connectionfailed'));
+  await page.locator('#focus').selectOption('yanao');
+  await submit(page);
+  await printCase('unavailable-photo', 2, null);
 });
 
 test('A31 · карта регионов, показатели и добавление к сравнению', async page => {

@@ -29,6 +29,8 @@ const checks = [
 let catalog;
 let displayedParameters;
 let executiveReport;
+let photoCatalog;
+let printing = false;
 let refreshTimer;
 const regionMap = createRegionMap({request, element, sourceLink, valueText, addSubject});
 
@@ -93,7 +95,7 @@ function updateReportNotice() {
   executiveStale.hidden = !stale;
   executiveDetails.hidden = output.hidden;
   const unavailable = settings.disabled || output.hidden || stale;
-  printButton.disabled = unavailable;
+  printButton.disabled = unavailable || printing;
   regionMap.setStale(unavailable);
 }
 
@@ -331,6 +333,45 @@ function executiveSelection(result) {
   return {subject, gap: yugra || result.gaps[0], title: subject.subject_id === 'yanao' ? 'ЯНАО за минуту' : subject.name};
 }
 
+async function regionPhoto(subject) {
+  try {
+    photoCatalog ??= request('/report-photos.json').catch(error => {
+      photoCatalog = undefined;
+      throw error;
+    });
+    const entry = (await photoCatalog)[subject.subject_id];
+    if (!entry) return null;
+    const photo = element('figure', undefined, 'region-photo');
+    const image = element('img');
+    image.alt = `Фото региона ${subject.name}`;
+    image.src = `/region-photos/${encodeURIComponent(subject.subject_id)}.jpg`;
+    await image.decode();
+    const caption = element('figcaption');
+    caption.append(sourceLink(entry.title, entry.source), ` · ${entry.author} · `,
+      sourceLink(entry.license, entry.license_url));
+    photo.append(image, caption);
+    return photo;
+  } catch {
+    return null;
+  }
+}
+
+async function photoForPrint(photo) {
+  let timer;
+  const deadline = new Promise(resolve => { timer = window.setTimeout(() => resolve(null), 2500); });
+  const copy = photo.then(async figure => {
+    if (!figure) return null;
+    const node = figure.cloneNode(true);
+    await node.querySelector('img').decode();
+    return node;
+  }).catch(() => null);
+  try {
+    return await Promise.race([copy, deadline]);
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 function gapMagnitude(value) {
   return valueText(value === null ? null : value.replace(/^-/, ''));
 }
@@ -368,9 +409,9 @@ function executiveMetrics(result, subject, gap) {
   });
 }
 
-function renderExecutive(result) {
+function renderExecutive(result, photo) {
   if (catalog.rating_id !== riaId) return;
-  executiveReport = result;
+  executiveReport = {result, photo};
   const {subject, gap, title} = executiveSelection(result);
   executive.querySelector('#executive-title').textContent = title;
   const source = result.current.source;
@@ -394,9 +435,25 @@ function renderExecutive(result) {
   executive.hidden = false;
 }
 
-function printExecutive() {
+async function printExecutive() {
   if (printButton.disabled || !executiveReport) return;
-  const result = executiveReport;
+  const prepared = executiveReport;
+  printing = true;
+  updateReportNotice();
+  try {
+    const photo = await photoForPrint(prepared.photo);
+    if (prepared !== executiveReport || settings.disabled
+        || displayedParameters !== JSON.stringify(comparisonParameters())) return;
+    fillPrintView(prepared.result, photo);
+    document.body.classList.add('print-executive');
+    window.print();
+  } finally {
+    printing = false;
+    updateReportNotice();
+  }
+}
+
+function fillPrintView(result, photo) {
   const {subject, gap, title} = executiveSelection(result);
   const essential = new Set([subject.subject_id]);
   if (gap) essential.add(gap.subject_id);
@@ -406,8 +463,13 @@ function printExecutive() {
   const metrics = element('div', undefined, 'executive-metrics');
   metrics.append(...executiveMetrics(result, subject, gap));
   const periodText = result.baseline ? `${result.current.period} год · база ${result.baseline.period}` : `${result.current.period} год`;
-  printView.replaceChildren(element('p', 'И16 · Справка для руководителя', 'note'), element('h1', title),
-    element('p', `${result.rating_title} · ${periodText}`), metrics, comparisonTable(result, rows, 'print-comparison-table'));
+  const heading = element('div');
+  heading.append(element('p', 'И16 · Справка для руководителя', 'note'), element('h1', title),
+    element('p', `${result.rating_title} · ${periodText}`));
+  const header = element('header', undefined, 'print-report-header');
+  header.append(heading);
+  if (photo) header.append(photo);
+  printView.replaceChildren(header, metrics, comparisonTable(result, rows, 'print-comparison-table'));
   if (rows.length < result.rows.length) {
     printView.append(element('p', `Показано ${rows.length} из ${result.rows.length} выбранных субъектов.`, 'note'));
   }
@@ -420,8 +482,6 @@ function printExecutive() {
   }
   if (result.partial) printView.append(element('p', 'Справка частичная. Причины указаны в полном сравнении.', 'note'));
   printView.append(reportSources(result));
-  document.body.classList.add('print-executive');
-  window.print();
 }
 
 function render(result) {
@@ -453,7 +513,9 @@ function render(result) {
     output.append(limits);
   }
   output.append(reportSources(result));
-  renderExecutive(result);
+  const photo = result.data_kind === 'production' ? regionPhoto(executiveSelection(result).subject) : Promise.resolve(null);
+  photo.then(figure => { if (figure) context.after(figure); });
+  renderExecutive(result, photo);
   if (catalog.rating_id === riaId) regionMap.update(result);
   output.hidden = false;
 }

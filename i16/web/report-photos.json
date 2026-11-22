@@ -1,0 +1,682 @@
+{
+  "altayskiy-kray": {
+    "author": "Александр Байдуков",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Алтайский край",
+    "source": "https://commons.wikimedia.org/wiki/File:The_Resort_Of_Belokurikha._Early_autumn_in_the_vicinity_of_the_resort_area.jpg",
+    "title": "The Resort Of Belokurikha. Early autumn in the vicinity of the resort area"
+  },
+  "amurskaya-oblast": {
+    "author": "caoyadong",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Амурская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Aihui,_Heihe,_Heilongjiang,_China_-_panoramio_(3).jpg",
+    "title": "Aihui, Heihe, Heilongjiang, China - panoramio (3)"
+  },
+  "arkhangel-skaya-oblast": {
+    "author": "Trasprd",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Архангельская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Solovetsky_Monastery_drone_1.jpg",
+    "title": "Solovetsky Monastery drone 1"
+  },
+  "astrakhanskaya-oblast": {
+    "author": "Astrakhan-musei",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Астрахань",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%90%D1%81%D1%82%D1%80%D0%B0%D1%85%D0%B0%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%BA%D1%80%D0%B5%D0%BC%D0%BB%D1%8C.jpg",
+    "title": "Астраханский кремль"
+  },
+  "belgorodskaya-oblast": {
+    "author": "Лобачев Владимир",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Белгородская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A0%D0%B5%D0%BA%D0%B0_%D0%9F%D1%81%D1%91%D0%BB_%D1%83_%D1%81%D0%B5%D0%BB%D0%B0_%D0%A1%D0%B0%D0%BC%D0%B0%D1%80%D0%B8%D0%BD%D0%BE_03.JPG",
+    "title": "Река Псёл у села Самарино 03"
+  },
+  "bryanskaya-oblast": {
+    "author": "Сержант Пеппер",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Брянская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%91%D1%80%D1%8F%D0%BD%D1%81%D0%BA._%D0%92%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D1%81%D0%BA%D0%B0%D1%8F_%D1%86._%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA%D0%BE%D0%B3%D0%BE_%D0%B6%D0%B5%D0%BD%D1%81%D0%BA%D0%BE%D0%B3%D0%BE_%D0%BC%D0%BE%D0%BD..JPG",
+    "title": "Брянск. Введенская ц. Петропавловского женского мон."
+  },
+  "chechenskaya-respublika": {
+    "author": "Rasul70",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Чечня",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9C%D0%B5%D1%87%D0%B5%D1%82%D1%8C_%22%D0%A1%D0%B5%D1%80%D0%B4%D1%86%D0%B5_%D0%A7%D0%B5%D1%87%D0%BD%D0%B8%22.jpg",
+    "title": "Мечеть \"Сердце Чечни\""
+  },
+  "chelyabinsk-oblast": {
+    "author": "Dmitry Shirokov",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Челябинская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A5%D1%80%D0%B5%D0%B1%D0%B5%D1%82_%D0%97%D1%8E%D1%80%D0%B0%D1%82%D0%BA%D1%83%D0%BB%D1%8C.jpg",
+    "title": "Хребет Зюраткуль"
+  },
+  "chukotskiy-avtonomnyy-okrug": {
+    "author": "Al chukotka",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Чукотский автономный округ",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%97%D0%BE%D0%BB%D0%BE%D1%82%D0%BE%D0%B9_%D1%85%D1%80%D0%B5%D0%B1%D0%B5%D1%82,_%D0%AE%D0%B6%D0%BD%D0%B0%D1%8F_%D0%A7%D1%83%D0%BA%D0%BE%D1%82%D0%BA%D0%B0.jpg",
+    "title": "Золотой хребет, Южная Чукотка"
+  },
+  "chuvashskaya-respublika": {
+    "author": "missing name",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "location": "Чувашия",
+    "source": "https://commons.wikimedia.org/wiki/File:20220626_Cheboksary_113.jpg",
+    "title": "20220626 Cheboksary 113"
+  },
+  "evreyskaya-avtonomnaya-oblast": {
+    "author": "Andrijko Z.",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Еврейская автономная область",
+    "source": "https://commons.wikimedia.org/wiki/File:On_the_Bira_embankment,_Birobidzhan.jpg",
+    "title": "On the Bira embankment, Birobidzhan"
+  },
+  "irkutskaya-oblast": {
+    "author": "Sergei Bunin",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Иркутская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%91%D1%83%D1%85%D1%82%D0%B0_%D0%9F%D0%B5%D1%81%D1%87%D0%B0%D0%BD%D0%B0%D1%8F,_%D0%B2%D0%B8%D0%B4_%D0%BD%D0%B0_%D0%B1%D1%83%D1%85%D1%82%D1%83.jpg",
+    "title": "Бухта Песчаная, вид на бухту"
+  },
+  "ivanovskaya-oblast": {
+    "author": "Alexxx1979",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Ивановская область",
+    "source": "https://commons.wikimedia.org/wiki/File:View_of_Plyos_from_Cathedral_Mountain_P5251847_2350.jpg",
+    "title": "View of Plyos from Cathedral Mountain P5251847 2350"
+  },
+  "kabardino-balkarskaya-respublika": {
+    "author": "Олег Мар",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Кабардино-Балкария",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A2%D1%8B%D0%B7%D1%8B%D0%BB%D1%8C%D1%81%D0%BA%D0%B0%D1%8F_%D1%82%D0%B5%D1%81%D0%BD%D0%B8%D0%BD%D0%B0.jpg",
+    "title": "Тызыльская теснина"
+  },
+  "kaliningradskaya-oblast": {
+    "author": "Go.astro",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Калининградская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Svetlogorsk_beach_2015-08_1439817260.jpg",
+    "title": "Svetlogorsk beach 2015-08 1439817260"
+  },
+  "kaluzhskaya-oblast": {
+    "author": "Celest (compilation)",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Калужская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Kaluga_Oblast_collage.jpg",
+    "title": "Kaluga Oblast collage"
+  },
+  "kamchatskiy-kray": {
+    "author": "Козинцев",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Камчатский край",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9A%D0%BE%D1%80%D1%8F%D0%BA%D1%81%D0%BA%D0%B8%D0%B9,_%D0%90%D0%B2%D0%B0%D1%87%D0%B8%D0%BD%D1%81%D0%BA%D0%B8%D0%B9,_%D0%9A%D0%BE%D0%B7%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%B8%D0%B9.jpg",
+    "title": "Корякский, Авачинский, Козельский"
+  },
+  "karachaevo-cherkesskaya-respublika": {
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "location": "Карачаево-Черкесия",
+    "source": "https://commons.wikimedia.org/wiki/File:Arkhyz,_Karachay-Cherkessia,_Taulu,_Trees_2.jpg",
+    "title": "Arkhyz, Karachay-Cherkessia, Taulu, Trees 2"
+  },
+  "kemerovskaya-oblast": {
+    "author": "Марина Ворфоломеева",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Шерегеш",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A8%D0%B5%D1%80%D0%B5%D0%B3%D0%B5%D1%88.jpg",
+    "title": "Шерегеш"
+  },
+  "khabarovskiy-kray": {
+    "author": "KoshkaLaoska",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Хабаровский край",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9C%D1%83%D1%80%D0%B0%D0%B2%D1%8C%D0%B5%D0%B2%D0%B0-%D0%90%D0%BC%D1%83%D1%80%D1%81%D0%BA%D0%BE%D0%B3%D0%BE,_17_-_%D0%B2%D0%B8%D0%B4_%D0%BD%D0%B0_%D1%84%D0%B0%D1%81%D0%B0%D0%B4.jpg",
+    "title": "Муравьева-Амурского, 17 - вид на фасад"
+  },
+  "khmao-yugra": {
+    "author": "Ted.ns",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "location": "Ханты-Мансийский автономный округ — Югра",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B5%D1%80%D0%B4%D1%86%D0%B5_%D0%AE%D0%B3%D1%80%D1%8B.jpg",
+    "title": "Сердце Югры"
+  },
+  "kirovskaya-oblast": {
+    "author": "Andrey kirov",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Кировская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Moloma.jpg",
+    "title": "Moloma"
+  },
+  "kostromskaya-oblast": {
+    "author": "Алексей Задонский",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Костромская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A0%D0%B5%D0%BA%D0%B0_%D0%92%D0%BE%D0%BB%D0%B3%D0%B0._%D0%9A%D0%BE%D1%81%D1%82%D1%80%D0%BE%D0%BC%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C.jpg",
+    "title": "Река Волга. Костромская область"
+  },
+  "krasnodarskiy-kray": {
+    "author": "Victor733",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Краснодарский край",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A1%D1%82%D0%B0%D0%B4%D0%B8%D0%BE%D0%BD_%D0%B0%D0%BA%D0%B0%D0%B4%D0%B5%D0%BC%D0%B8%D0%B8_%D1%84%D0%BA_%D0%9A%D1%80%D0%B0%D1%81%D0%BD%D0%BE%D0%B4%D0%B0%D1%80_%D0%B8_%D0%BF%D0%B0%D1%80%D0%BA_%D0%9E%D0%B1%D0%BB%D0%B0%D0%BA%D0%BE%D0%B2_by_Lunacia.jpg",
+    "title": "Стадион академии фк Краснодар и парк Облаков by Lunacia"
+  },
+  "krasnoyarskiy-kray": {
+    "author": "The original uploader was Arcan at Russian Wikipedia .",
+    "license": "CC BY 2.5",
+    "license_url": "https://creativecommons.org/licenses/by/2.5",
+    "location": "Красноярский край",
+    "source": "https://commons.wikimedia.org/wiki/File:Mana_river_1.jpg",
+    "title": "Mana river 1"
+  },
+  "kurgan-oblast": {
+    "author": "Слотвинская Ольга",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Курганская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A2%D1%83%D0%BC%D0%B0%D0%BD_%D0%BF%D0%BE%D1%81%D0%BB%D0%B5_%D0%B3%D1%80%D0%BE%D0%B7%D1%8B_%D0%B2_%D0%A9%D0%B8%D0%B3%D1%80%D0%BE%D0%B2%D1%81%D0%BA%D0%BE%D0%B9_%D0%A1%D0%BE%D0%B3%D1%80%D0%B5.JPG",
+    "title": "Туман после грозы в Щигровской Согре"
+  },
+  "kurskaya-oblast": {
+    "author": "Alexxx1979",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Курская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Rylsk_P5080392_2200.jpg",
+    "title": "Rylsk P5080392 2200"
+  },
+  "leningradskaya-oblast": {
+    "author": "Андрей Бобровский",
+    "license": "CC BY 3.0",
+    "license_url": "https://creativecommons.org/licenses/by/3.0",
+    "location": "Копорье (крепость)",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9A%D0%BE%D0%BF%D0%BE%D1%80%D1%8C%D0%B5_%D0%BA%D1%80%D0%B5%D0%BF%D0%BE%D1%81%D1%82%D1%8C_-_panoramio_(4).jpg",
+    "title": "Копорье крепость - panoramio (4)"
+  },
+  "lipetskaya-oblast": {
+    "author": "Алексей Задонский",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Липецкая область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%92%D0%BE%D0%B7%D0%BD%D0%B5%D1%81%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D1%81%D0%BE%D0%B1%D0%BE%D1%80_%D0%BD%D0%B0_%D0%B1%D0%B5%D1%80%D0%B5%D0%B3%D1%83_%D1%80%D0%B5%D0%BA%D0%B8_%D0%A1%D0%BE%D1%81%D0%BD%D0%B0.jpg",
+    "title": "Вознесенский собор на берегу реки Сосна"
+  },
+  "magadanskaya-oblast": {
+    "author": "Kirill3754",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Магаданская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%93%D0%BE%D1%80%D0%BD%D0%BE%D0%BB%D1%8B%D0%B6%D0%BD%D0%B0%D1%8F_%D0%B1%D0%B0%D0%B7%D0%B0_2.JPG",
+    "title": "Горнолыжная база 2"
+  },
+  "moscow": {
+    "author": "Alvesgaspar",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Москва",
+    "source": "https://commons.wikimedia.org/wiki/File:Moscow_July_2011-16.jpg",
+    "title": "Moscow July 2011-16"
+  },
+  "moscow-oblast": {
+    "author": "Ludvig14",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Коломна",
+    "source": "https://commons.wikimedia.org/wiki/File:Kolomna_Cemter_0065.jpg",
+    "title": "Kolomna Cemter 0065"
+  },
+  "murmanskaya-oblast": {
+    "author": "Oleg Filonok",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Мурманская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9B%D0%B0%D0%BF%D0%BB%D0%B0%D0%BD%D0%B4%D1%81%D0%BA%D0%B8%D0%B9_%D0%B7%D0%B0%D0%BF%D0%BE%D0%B2%D0%B5%D0%B4%D0%BD%D0%B8%D0%BA..jpg",
+    "title": "Лапландский заповедник."
+  },
+  "nenetskiy-avtonomnyy-okrug": {
+    "author": "ezioman",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "location": "Ненецкий автономный округ",
+    "source": "https://commons.wikimedia.org/wiki/File:Naryan-Mar_reindeer.jpg",
+    "title": "Naryan-Mar reindeer"
+  },
+  "nizhegorodskaya-oblast": {
+    "author": "Кривошеина Мария",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Нижегородская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9A%D1%80%D0%B5%D0%BC%D0%BB%D1%8C_%D0%9D%D0%B8%D0%B6%D0%BD%D0%B8%D0%B9_1_%D0%BE%D0%B1%D1%80%D0%B5%D0%B7%D0%B0%D0%BD%D0%BD%D1%8B%D0%B9.jpg",
+    "title": "Кремль Нижний 1 обрезанный"
+  },
+  "novgorodskaya-oblast": {
+    "author": "Шелепин Евгений Юрьевич",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Новгородская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%98%D0%B2%D0%B5%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D0%9C%D0%BE%D0%BD%D0%B0%D1%81%D1%82%D1%8B%D1%80%D1%8C_%D1%81_%D0%B2%D0%BE%D0%B7%D0%B4%D1%83%D1%85%D0%B0.jpg",
+    "title": "Иверский Монастырь с воздуха"
+  },
+  "novosibirskaya-oblast": {
+    "author": "Novosibirsk travel on Al-Ashraf",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Новосибирская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Novosibirsk_skyline_in_winter.jpg",
+    "title": "Novosibirsk skyline in winter"
+  },
+  "omskaya-oblast": {
+    "author": "Doronivan",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Омская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9E%D1%81%D0%B5%D0%BD%D1%8C_%D0%B2_%D0%9F%D0%BE%D0%BB%D0%B8%D1%82%D0%BE%D1%82%D0%B4%D0%B5%D0%BB%D0%B5.JPG",
+    "title": "Осень в Политотделе"
+  },
+  "orenburgskaya-oblast": {
+    "author": "Игорь Шпиленок",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Оренбургская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Burtunskaya_step.jpg",
+    "title": "Burtunskaya step"
+  },
+  "orlovskaya-oblast": {
+    "author": "G\\R792",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Орловская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9E%D1%80%D0%BB%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C.jpg",
+    "title": "Орловская область"
+  },
+  "penzenskaya-oblast": {
+    "author": "Владимир Шеляпин",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Пенза",
+    "source": "https://commons.wikimedia.org/wiki/File:Penza_from_Ferris_wheel.JPG",
+    "title": "Пенза с колеса обозрения"
+  },
+  "permskiy-kray": {
+    "author": "Niklitov",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Пермский край",
+    "source": "https://commons.wikimedia.org/wiki/File:Vishera_River,_Perm_Krai.jpg",
+    "title": "Vishera River, Perm Krai"
+  },
+  "primorskiy-kray": {
+    "author": "Дмитрий Алтунин",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Приморский край",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%91%D1%83%D1%85%D1%82%D0%B0_%D0%94%D1%83%D0%B1%D0%BE%D0%B2%D0%B0%D1%8F.jpg",
+    "title": "Бухта Дубовая"
+  },
+  "pskovskaya-oblast": {
+    "author": "EkaterinaKhomichenko",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Изборск",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%98%D0%B7%D0%B1%D0%BE%D1%80%D1%81%D0%BA%D0%B0%D1%8F_%D0%BA%D1%80%D0%B5%D0%BF%D0%BE%D1%81%D1%82%D1%8C._%D0%90%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D1%8B%D0%B9_%D0%B0%D0%BD%D1%81%D0%B0%D0%BC%D0%B1%D0%BB%D1%8C.jpg",
+    "title": "Изборская крепость. Архитектурный ансамбль"
+  },
+  "respublika-adygeya": {
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "location": "Адыгея",
+    "source": "https://commons.wikimedia.org/wiki/File:Acheshbok,_%D0%AE%D0%B6%D0%BD%D1%8B%D0%B5_%D0%BE%D1%82%D1%80%D0%BE%D0%B3%D0%B8_%D0%B3%D0%BE%D1%80%D1%8B_%D0%90%D1%87%D0%B5%D1%88%D0%B1%D0%BE%D0%BA,_%D0%B4%D1%80%D0%B0%D0%BC%D0%B0%D1%82%D0%B8%D1%87%D0%BD%D1%8B%D0%B5_%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%BD%D1%8B%D0%B5_%D1%83%D1%81%D0%BB%D0%BE%D0%B2%D0%B8%D1%8F_%D1%80%D0%B0%D0%BD%D0%BD%D0%B5%D0%B3%D0%BE_%D0%BB%D0%B5%D1%82%D0%B0,_%D0%97%D0%B0%D0%BF%D0%B0%D0%B4%D0%BD%D1%8B%D0%B9_%D0%9A%D0%B0%D0%B2%D0%BA%D0%B0%D0%B7.jpg",
+    "title": "Acheshbok, Южные отроги горы Ачешбок, драматичные погодные условия раннего лета, Западный Кавказ"
+  },
+  "respublika-altay": {
+    "author": "Александр Лещёнок",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Республика Алтай",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%BA%D0%B0%D0%B7%D0%BA%D0%B0,%D0%9C%D0%B5%D1%87%D1%82%D0%B0,%D0%9A%D1%80%D0%B0%D1%81%D0%B0%D0%B2%D0%B8%D1%86%D0%B0.jpg",
+    "title": "Сказка,Мечта,Красавица"
+  },
+  "respublika-bashkortostan": {
+    "author": "Неизвестно",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "location": "Уфа",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%94%D0%BE%D0%BC_%D0%B6%D0%B8%D0%BB%D0%BE%D0%B9_%D0%9D%D0%B0%D0%B3%D0%B0%D1%80%D0%B5%D0%B2%D0%B0,_%D0%A3%D1%84%D0%B0.jpg",
+    "title": "Дом жилой Нагарева, Уфа"
+  },
+  "respublika-buryatiya": {
+    "author": "Lynx4502",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Бурятия",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%BE%D0%BB%D0%BD%D0%B5%D1%87%D0%BD%D1%8B%D0%B9_%D0%B4%D0%B5%D0%BD%D1%8C_%D0%BD%D0%B0_%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%B0%D0%BB%D0%B5.jpg",
+    "title": "Солнечный день на перевале"
+  },
+  "respublika-dagestan": {
+    "author": "Аль-Гимравий",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Дагестан",
+    "source": "https://commons.wikimedia.org/wiki/File:Sulak_Canyon_in_Dagestan.jpg",
+    "title": "Sulak Canyon in Dagestan"
+  },
+  "respublika-ingushetiya": {
+    "author": "Adam Sagov",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Ингушетия",
+    "source": "https://commons.wikimedia.org/wiki/File:Magas.jpg",
+    "title": "Magas"
+  },
+  "respublika-kalmykiya": {
+    "author": "Alexxx1979",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Калмыкия",
+    "source": "https://commons.wikimedia.org/wiki/File:Elista_P5111385_2200.jpg",
+    "title": "Elista P5111385 2200"
+  },
+  "respublika-kareliya": {
+    "author": "Yuriy Stolypin",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "location": "Карелия",
+    "source": "https://commons.wikimedia.org/wiki/File:Summer,_August,_morning,_skerries.jpg",
+    "title": "Summer, August, morning, skerries"
+  },
+  "respublika-khakasiya": {
+    "author": "Имя имени",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Абакан",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B5%D1%81%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D0%BA%D0%B0%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%B4%D1%80%D0%B0%D0%BC%D0%B0%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9_%D1%82%D0%B5%D0%B0%D1%82%D1%80_%D0%B8%D0%BC%D0%B5%D0%BD%D0%B8_%D0%9C._%D0%AE._%D0%9B%D0%B5%D1%80%D0%BC%D0%BE%D0%BD%D1%82%D0%BE%D0%B2%D0%B0.jpg",
+    "title": "Русский республиканский драматический театр имени М. Ю. Лермонтова"
+  },
+  "respublika-komi": {
+    "author": "Aleksandr Chazov",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Республика Коми",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9C%D0%B0%D0%BD%D0%B0%D1%80%D0%B0%D0%B3%D0%B0_%D0%B8_%D0%BE%D0%B7%D0%B5%D1%80%D0%BE.jpg",
+    "title": "Манарага и озеро"
+  },
+  "respublika-krym": {
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "location": "Республика Крым",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%93%D0%BE%D1%80%D1%8B_%D0%BD%D0%B0_%D0%BF%D0%BE%D0%B1%D0%B5%D1%80%D0%B5%D0%B6%D1%8C%D0%B5,_%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9_%D0%A1%D0%B2%D0%B5%D1%82,_%D0%A1%D1%83%D0%B4%D0%B0%D0%BA,_%D0%9A%D1%80%D1%8B%D0%BC,_Crimea.jpg",
+    "title": "Горы на побережье, Новый Свет, Судак, Крым, Crimea"
+  },
+  "respublika-mariy-el": {
+    "author": "Badanovalexandr",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Марий Эл",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%92%D0%B5%D1%87%D0%B5%D1%80_%D0%BD%D0%B0_%D0%BE%D0%B7%D0%B5%D1%80%D0%B5._%D0%97%D0%B0%D0%BA%D0%B0%D1%82.JPG",
+    "title": "Вечер на озере. Закат"
+  },
+  "respublika-mordoviya": {
+    "author": "Hannerdy",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Мордовия",
+    "source": "https://commons.wikimedia.org/wiki/File:Saransk.jpg",
+    "title": "Saransk"
+  },
+  "respublika-sakha-yakutiya": {
+    "author": "Ilya Varlamov",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Якутия",
+    "source": "https://commons.wikimedia.org/wiki/File:Yakutsk_-_190228_DSC_5379.jpg",
+    "title": "Yakutsk - 190228 DSC 5379"
+  },
+  "respublika-severnaya-osetiya-alaniya": {
+    "author": "Trip.with.taste",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Северная Осетия",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%94%D1%80%D0%B5%D0%B2%D0%BD%D0%B8%D0%B9_%D0%B3%D0%BE%D1%80%D0%B4_%D0%A6%D0%B8%D0%BC%D0%B8%D1%82%D0%B8_03.jpg",
+    "title": "Древний горд Цимити 03"
+  },
+  "respublika-tyva": {
+    "author": "Zamunu45",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Тыва",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A6%D0%B5%D0%BD%D1%82%D1%80_%D0%90%D0%B7%D0%B8%D0%B8_%D0%B0%D0%B2%D0%B3%D1%83%D1%81%D1%82_2015%D0%B3.jpg",
+    "title": "Центр Азии август 2015г"
+  },
+  "rostovskaya-oblast": {
+    "author": "Alexxx1979",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Ростовская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Khutor_Starozolotovskii_P7092230_2575.jpg",
+    "title": "Khutor Starozolotovskii P7092230 2575"
+  },
+  "ryazanskaya-oblast": {
+    "author": "Celest (compilation)",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Рязанская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Ryazan_Oblast_collage.jpg",
+    "title": "Ryazan Oblast collage"
+  },
+  "saint-petersburg": {
+    "author": "Florstein ( Telegram: WikiPhoto.Space )",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Санкт-Петербург",
+    "source": "https://commons.wikimedia.org/wiki/File:Palace_Bridge_SPB_(img2)_Crop.jpg",
+    "title": "Palace Bridge SPB (img2) Crop"
+  },
+  "sakhalinskaya-oblast": {
+    "author": "Eugene Yakovenko",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Сахалинская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Yuzhno-Sakhalinsk,_Sakhalin_Oblast,_Russia_-_panoramio_(1).jpg",
+    "title": "Yuzhno-Sakhalinsk, Sakhalin Oblast, Russia - panoramio (1)"
+  },
+  "samarskaya-oblast": {
+    "author": "Vlad Volkov",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0",
+    "location": "Самарская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Samara_-_View_from_Volga_(2008-07-13).jpg",
+    "title": "Samara - View from Volga (2008-07-13)"
+  },
+  "saratovskaya-oblast": {
+    "author": "Road Sign Series",
+    "license": "CC BY 3.0",
+    "license_url": "https://creativecommons.org/licenses/by/3.0",
+    "location": "Саратовская область",
+    "source": "https://commons.wikimedia.org/wiki/File:-_panoramio_-_Road_Sign_Series_(8).jpg",
+    "title": "- panoramio - Road Sign Series (8)"
+  },
+  "sevastopol": {
+    "author": "GIC198",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Севастополь",
+    "source": "https://commons.wikimedia.org/wiki/File:1356_%D0%9F%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA_%D0%B7%D0%B0%D1%82%D0%BE%D0%BF%D0%BB%D0%B5%D0%BD%D0%BD%D1%8B%D0%BC_%D0%BA%D0%BE%D1%80%D0%B0%D0%B1%D0%BB%D1%8F%D0%BC.jpg",
+    "title": "1356 Памятник затопленным кораблям"
+  },
+  "smolenskaya-oblast": {
+    "author": "Ghirlandajo",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Смоленск",
+    "source": "https://commons.wikimedia.org/wiki/File:Smolensk_downtown.jpg",
+    "title": "Smolensk downtown"
+  },
+  "stavropol-skiy-kray": {
+    "author": "Лукашенко Семён",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Ставропольский край",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%92%D0%B8%D0%B4_%D0%BD%D0%B0_%D0%B3%D0%BE%D1%80%D1%83_%D0%92%D0%B5%D1%80%D0%B1%D0%BB%D1%8E%D0%B4.jpg",
+    "title": "Вид на гору Верблюд"
+  },
+  "sverdlovsk-oblast": {
+    "author": "Митрохина Марина",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Екатеринбург",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%93%D0%BE%D1%80%D1%81%D0%BE%D0%B2%D0%B5%D1%82_%D0%90%D0%B4%D0%BC%D0%B8%D0%BD%D0%B8%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F_%D0%95%D0%BA%D0%B0%D1%82%D0%B5%D1%80%D0%B8%D0%BD%D0%B1%D1%83%D1%80%D0%B3%D0%B0.jpg",
+    "title": "Горсовет Администрация Екатеринбурга"
+  },
+  "tambovskaya-oblast": {
+    "author": "Дмитрий Ратников",
+    "license": "CC BY 3.0",
+    "license_url": "https://creativecommons.org/licenses/by/3.0",
+    "location": "Тамбовская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9F%D0%B5%D1%81%D0%BA%D0%BE%D0%B2%D0%B0%D1%82%D0%BA%D0%B0.jpg",
+    "title": "Песковатка"
+  },
+  "tatarstan": {
+    "author": "Andrij Bulba",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0",
+    "location": "Татарстан",
+    "source": "https://commons.wikimedia.org/wiki/File:Night_aerial_view_of_Kazan,_Russia_(2007).jpg",
+    "title": "Night aerial view of Kazan, Russia (2007)"
+  },
+  "tomskaya-oblast": {
+    "author": "Vatrynya",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Томская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9C%D0%B8%D1%85%D0%B0%D0%B9%D0%BB%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F_%D1%80%D0%BE%D1%89%D0%B0.jpg",
+    "title": "Михайловская роща"
+  },
+  "tul-skaya-oblast": {
+    "author": "Celest (compilation)",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Тульская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Tula_Oblast_collage.jpg",
+    "title": "Tula Oblast collage"
+  },
+  "tverskaya-oblast": {
+    "author": "Belliy",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Тверская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A1%D1%82%D0%B0%D1%80%D0%B8%D1%86%D0%BA%D0%B8%D0%B9_%D0%A1%D0%B2%D1%8F%D1%82%D0%BE-%D0%A3%D1%81%D0%BF%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B9_%D0%BC%D0%BE%D0%BD%D0%B0%D1%81%D1%82%D1%8B%D1%80%D1%8C.jpg",
+    "title": "Старицкий Свято-Успенский монастырь"
+  },
+  "tyumen-oblast": {
+    "author": "Andrey Nagaycev",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "location": "Тюменская область",
+    "source": "https://commons.wikimedia.org/wiki/File:View_from_the_Mountain_of_Love_-_panoramio.jpg",
+    "title": "View from the Mountain of Love - panoramio"
+  },
+  "udmurtskaya-respublika": {
+    "author": "Александр Фенелонов",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Удмуртия",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%93%D0%B0%D0%BB%D1%91%D0%B2%D0%BE._%D0%9A%D0%B0%D0%BC%D1%81%D0%BA%D0%B8%D0%B9_%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%D1%80.jpg",
+    "title": "Галёво. Камский простор"
+  },
+  "ul-yanovskaya-oblast": {
+    "author": "Нина Дюкова",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Ульяновская область",
+    "source": "https://commons.wikimedia.org/wiki/File:Ulyanovsk_oblast.jpg",
+    "title": "Ulyanovsk oblast"
+  },
+  "vladimirskaya-oblast": {
+    "author": "Suzdal traveler",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Суздаль",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%A1%D1%83%D0%B7%D0%B4%D0%B0%D0%BB%D1%8C_342.jpg",
+    "title": "Суздаль 342"
+  },
+  "volgogradskaya-oblast": {
+    "author": "Чуринъ",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Волгоградская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9C%D0%BE%D0%BD%D1%83%D0%BC%D0%B5%D0%BD%D1%82_%C2%AB%D0%A0%D0%BE%D0%B4%D0%B8%D0%BD%D0%B0-%D0%BC%D0%B0%D1%82%D1%8C_%D0%B7%D0%BE%D0%B2%D1%91%D1%82!%C2%BB_%D0%BD%D0%B0_%D0%9C%D0%B0%D0%BC%D0%B0%D0%B5%D0%B2%D0%BE%D0%BC_%D0%BA%D1%83%D1%80%D0%B3%D0%B0%D0%BD%D0%B5.jpg",
+    "title": "Монумент «Родина-мать зовёт!» на Мамаевом кургане"
+  },
+  "vologodskaya-oblast": {
+    "author": "Sergeykoch",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Вологодская область",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%92%D0%B5%D1%87%D0%B5%D1%80_%D1%83_%D0%9A%D0%B8%D1%80%D0%B8%D0%BB%D0%BB%D0%BE-%D0%91%D0%B5%D0%BB%D0%BE%D0%B7%D0%B5%D1%80%D1%81%D0%BA%D0%BE%D0%B3%D0%BE_%D0%BC%D0%BE%D0%BD%D0%B0%D1%81%D1%82%D1%8B%D1%80%D1%8F.jpg",
+    "title": "Вечер у Кирилло-Белозерского монастыря"
+  },
+  "voronezhskaya-oblast": {
+    "author": "Надежда Алистратова",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Воронеж",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%B2%D1%81%D0%BA%D0%B8%D0%B9_%D1%81%D0%BA%D0%B2%D0%B5%D1%80-2.JPG",
+    "title": "Петровский сквер-2"
+  },
+  "yanao": {
+    "author": "Sibalexx",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Ямало-Ненецкий автономный округ",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9E%D0%B1%D0%B4%D0%BE%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D0%BE%D1%81%D1%82%D1%80%D0%BE%D0%B3.jpg",
+    "title": "Обдорский острог"
+  },
+  "yaroslavskaya-oblast": {
+    "author": "Ludvig14",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Ярославская область",
+    "source": "https://commons.wikimedia.org/wiki/File:BorisoglebskyMon_StSergiusChurch_R09.jpg",
+    "title": "BorisoglebskyMon StSergiusChurch R09"
+  },
+  "zabaykal-skiy-kray": {
+    "author": "Vyacheslav Bukharov",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "location": "Чита",
+    "source": "https://commons.wikimedia.org/wiki/File:Buildings_in_Chita_(June_2026)_-_0_12.jpg",
+    "title": "Buildings in Chita (June 2026) - 0 12"
+  }
+}

@@ -289,6 +289,7 @@ tbody tr:last-child > * { border-bottom: 0; }
 .neutral { background: var(--mist); }
 .note { color: var(--muted); font-size: .875rem; margin: 6px 0 0; }
 .limits { background: var(--rose); padding: 14px 18px; }
+.region-photo { display: none; }
 ul { margin: 0; padding-inline-start: 20px; }
 li + li { margin-top: 4px; }
 a { color: var(--accent); text-underline-offset: .15em; }
@@ -320,6 +321,10 @@ a { color: var(--accent); text-underline-offset: .15em; }
   tr { break-inside: avoid; }
   .chart { break-inside: avoid; print-color-adjust: exact; }
   h2 { break-after: avoid; }
+  .region-photo { display: block; margin: 2mm 0 3mm; max-width: 65mm; break-inside: avoid; }
+  .region-photo img { display: block; width: 100%; height: 30mm; object-fit: contain; object-position: left center; }
+  .region-photo figcaption { margin-top: 1mm; color: var(--muted); font-size: 8pt; line-height: 1.25; overflow-wrap: anywhere; }
+  .print-report-header:has(.region-photo) { display: grid; grid-template-columns: minmax(0, 1fr) 64mm; gap: 5mm; align-items: start; }
   body.print-executive > :not(#executive-print) { display: none !important; }
   body.print-executive #executive-print { display: block; page: executive; font-size: 9pt; }
   #executive-print h1 { font-size: 23pt; margin-block: 5pt; }
