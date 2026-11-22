@@ -1,11 +1,13 @@
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+import secrets
 from urllib.parse import parse_qs, urlsplit
 
 from .admin import BASIC_CHALLENGE
 from .comparison import compare
 from .dataset import InputError, parse_dataset, rating_identifier
+from .email_access import SESSION_SECONDS, email_address, session_cookie, session_hash, token_hash
 from .payloads import comparison_payload, map_payload, payload_json, rating_payload
 from .postgres import RatingMissing, SourceConflict, StoreError
 
@@ -18,6 +20,8 @@ STATIC = {
     "/russia-map.js": ("russia-map.js", "text/javascript; charset=utf-8"),
     "/russia-regions.json": ("russia-regions.json", "application/json; charset=utf-8"),
     "/favicon.ico": ("favicon.ico", "image/vnd.microsoft.icon"),
+    "/login/": ("login.html", "text/html; charset=utf-8"),
+    "/workspace.js": ("workspace.js", "text/javascript; charset=utf-8"),
 }
 
 
@@ -50,7 +54,8 @@ def _body_params(body):
     return body.get("period"), subjects, body.get("baseline"), body.get("focus_subject_id")
 
 
-def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=None, admin=None, refresh_request=None):
+def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=None, admin=None,
+                refresh_request=None, mailer=None, auth_origin=None):
     class Handler(BaseHTTPRequestHandler):
         def _send(self, status, content, media, headers=()):
             self.send_response(status)
@@ -81,11 +86,14 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
 
         def _dispatch(self, method):
             port = self.server.server_port
-            allowed = {f"localhost:{port}", f"127.0.0.1:{port}"}
-            if self.headers.get("Host") not in allowed:
-                return self._error(403, "host_forbidden", "Откройте приложение по локальному адресу.")
+            hosts = {host: f"http://{host}" for host in (f"localhost:{port}", f"127.0.0.1:{port}")}
+            if auth_origin:
+                hosts[auth_origin.netloc] = auth_origin.geturl()
+            host = self.headers.get("Host")
+            if host not in hosts:
+                return self._error(403, "host_forbidden", "Откройте приложение по настроенному адресу.")
             origin = self.headers.get("Origin")
-            if method == "POST" and origin and origin not in {f"http://{host}" for host in allowed}:
+            if method == "POST" and origin and origin != hosts[host]:
                 return self._error(403, "origin_forbidden", "Запрос должен исходить от приложения И16.")
             try:
                 requested = urlsplit(self.path)
@@ -94,6 +102,12 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                     return self._send(308, b"", "text/plain", (("Location", "/admin/"),))
                 if path.startswith("/admin/"):
                     return self._admin(method, path, requested.query)
+                if method == "GET" and path in {"/login", "/workspace"}:
+                    return self._redirect(path + "/")
+                if method == "GET" and path in {"/workspace/", "/workspace/api/v1/ratings"}:
+                    return self._workspace(path)
+                if method == "POST" and path.startswith("/auth/api/v1/"):
+                    return self._email_access(path, hosts[host])
                 if method == "GET" and path in STATIC:
                     filename, media = STATIC[path]
                     return self._send(200, (WEB / filename).read_bytes(), media)
@@ -124,6 +138,63 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 return self._error(409, "source_conflict", str(error))
             except StoreError as error:
                 return self._error(503, "database_unavailable", str(error))
+
+        def _redirect(self, path):
+            return self._send(302, b"", "text/plain", (("Location", path),))
+
+        def _workspace(self, path):
+            digest = session_hash(self.headers.get("Cookie"))
+            email = store.workspace_email(digest) if digest else None
+            if path == "/workspace/":
+                if email is None:
+                    return self._redirect("/login/")
+                return self._send(200, (WEB / "workspace.html").read_bytes(), "text/html; charset=utf-8",
+                                  (("X-Frame-Options", "DENY"),))
+            if email is None:
+                return self._error(401, "session_required", "Войдите по email.")
+
+            ratings = {}
+            for source in store.sources():
+                identifier = source["rating_id"]
+                item = ratings.setdefault(identifier, {
+                    "rating_id": identifier, "title": source["rating_title"],
+                    "data_kind": source["data_kind"], "periods": [],
+                })
+                item["periods"].append(source["period"])
+            return self._json(200, {"email": email, "ratings": list(ratings.values())})
+
+        def _email_access(self, path, origin):
+            secure = origin.startswith("https://")
+            if path == "/auth/api/v1/email":
+                body = self._read_body()
+                email = email_address(body.get("email") if isinstance(body, dict) else None)
+                if mailer is None:
+                    return self._error(503, "email_unavailable", "Отправка писем пока не настроена.")
+                token = secrets.token_urlsafe(32)
+                digest = token_hash(token)
+                if store.issue_email_link(email, digest):
+                    base = auth_origin.geturl() if auth_origin else origin
+                    try:
+                        mailer(email, f"{base}/login/#token={token}")
+                    except OSError:
+                        store.cancel_email_link(digest)
+                        return self._error(503, "email_unavailable", "Не удалось отправить письмо. Повторите запрос позже.")
+                return self._json(202, {"accepted": True})
+            if path == "/auth/api/v1/verify":
+                body = self._read_body()
+                digest = token_hash(body.get("token") if isinstance(body, dict) else None)
+                session = secrets.token_urlsafe(32)
+                if not digest or not store.redeem_email_link(digest, token_hash(session), SESSION_SECONDS):
+                    return self._error(400, "invalid_email_link", "Ссылка истекла или уже использована. Запросите новую.")
+                return self._json(200, {"authenticated": True}, (("Set-Cookie", session_cookie(session, secure)),))
+            if path == "/auth/api/v1/logout":
+                if self._read_body() != {}:
+                    raise InputError("Для выхода передайте пустой объект JSON")
+                digest = session_hash(self.headers.get("Cookie"))
+                if digest:
+                    store.close_workspace_session(digest)
+                return self._json(200, {"authenticated": False}, (("Set-Cookie", session_cookie("", secure)),))
+            return self._error(404, "not_found", "Страница не найдена.")
 
         def _admin(self, method, path, query):
             if admin is None:

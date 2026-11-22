@@ -56,6 +56,13 @@ main { padding-block: 28px 48px; }
 .admin-analytics { margin-top: 24px; }
 #admin-import { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 #admin-dataset { max-width: 100%; min-width: 0; }
+.hero-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; }
+.hero-nav a { color: inherit; font-size: .875rem; }
+.workspace-access { max-width: 540px; margin-top: 20px; padding: 20px; border: 1px solid var(--line); }
+#email-form input { display: block; width: 100%; padding: 8px; margin: 6px 0 12px; border: 1px solid var(--line); font: inherit; }
+.workspace-account { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 24px; }
+#workspace-ratings { padding: 0; list-style: none; }
+#workspace-ratings li { border-top: 1px solid var(--line); padding: 12px 0; }
 .admin-analytics h3 { margin: 22px 0 8px; }
 .admin-metrics { margin: 0; }
 .admin-metrics dd { margin: 0; font-size: 1.55rem; font-weight: 700; }

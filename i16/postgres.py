@@ -116,6 +116,74 @@ class Postgres:
             INSERT INTO rating_results (rating_id, period, subject_id, rank, score) VALUES (%s, %s, %s, %s, %s)
             """, [(identifier, snapshot.period, subject, row.rank, row.score) for subject, row in snapshot.rows.items()])
 
+    def issue_email_link(self, email, token_hash):
+        try:
+            with self._connect() as conn:
+                conn.execute("SELECT pg_advisory_xact_lock(20829, 19)")
+                conn.execute("DELETE FROM workspace_email_links WHERE issued_at < now() - interval '1 day'")
+                recent = conn.execute("""
+                    SELECT count(*) AS total FROM workspace_email_links
+                    WHERE issued_at > now() - interval '1 minute'
+                    """).fetchone()["total"]
+                if recent >= 30:
+                    return False
+                link = conn.execute("""
+                    INSERT INTO workspace_email_links (email, token_hash, issued_at, expires_at)
+                    VALUES (%s, %s, now(), now() + interval '15 minutes')
+                    ON CONFLICT (email) DO UPDATE SET token_hash = EXCLUDED.token_hash,
+                        issued_at = EXCLUDED.issued_at, expires_at = EXCLUDED.expires_at
+                    WHERE workspace_email_links.issued_at <= now() - interval '1 minute'
+                    RETURNING email
+                    """, (email, token_hash)).fetchone()
+                return link is not None
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
+    def cancel_email_link(self, token_hash):
+        try:
+            with self._connect() as conn:
+                conn.execute("DELETE FROM workspace_email_links WHERE token_hash = %s", (token_hash,))
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
+    def redeem_email_link(self, token_hash, session_hash, session_seconds):
+        try:
+            with self._connect() as conn:
+                link = conn.execute("""
+                    UPDATE workspace_email_links SET token_hash = NULL
+                    WHERE token_hash = %s AND expires_at > now()
+                    RETURNING email
+                    """, (token_hash,)).fetchone()
+                if link is None:
+                    return False
+                email = link["email"]
+                conn.execute("INSERT INTO workspace_users (email) VALUES (%s) ON CONFLICT DO NOTHING", (email,))
+                conn.execute("DELETE FROM workspace_sessions WHERE expires_at <= now()")
+                conn.execute("""
+                    INSERT INTO workspace_sessions (token_hash, email, expires_at)
+                    VALUES (%s, %s, now() + %s * interval '1 second')
+                    """, (session_hash, email, session_seconds))
+                return True
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
+    def workspace_email(self, session_hash):
+        try:
+            with self._connect() as conn:
+                row = conn.execute("""
+                    SELECT email FROM workspace_sessions WHERE token_hash = %s AND expires_at > now()
+                    """, (session_hash,)).fetchone()
+                return row["email"] if row else None
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
+    def close_workspace_session(self, session_hash):
+        try:
+            with self._connect() as conn:
+                conn.execute("DELETE FROM workspace_sessions WHERE token_hash = %s", (session_hash,))
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
     def load(self, identifier: str) -> Dataset:
         try:
             with self._connect() as conn:

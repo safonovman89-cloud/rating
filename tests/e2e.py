@@ -289,6 +289,17 @@ def main():
                 refresh_status=worker.status, refresh_request=worker.request_check,
             ))
             urls["adminPartial"] = stack.enter_context(server(connection, "demo-e2e-zero", admin=credentials))
+            mailbox = Path(scratch) / "mailbox.jsonl"
+
+            def capture_email(email, link):
+                if email == "expired@example.test":
+                    with connect(connection) as conn:
+                        conn.execute("UPDATE workspace_email_links SET expires_at = now() WHERE email = %s", (email,))
+                with mailbox.open("a", encoding="utf-8") as stream:
+                    stream.write(json.dumps({"email": email, "link": link}) + "\n")
+
+            urls["auth"] = stack.enter_context(server(connection, RIA_ID, admin=credentials, mailer=capture_email))
+            urls["mailbox"] = str(mailbox)
             worker.start()
             stack.callback(worker.stop)
             unavailable = make_conninfo(LOCAL_DSN, port=1)
@@ -296,6 +307,10 @@ def main():
             result = subprocess.run(
                 ["node", str(Path(__file__).with_suffix(".mjs")), json.dumps(urls), str(output), str(ria)], cwd=ROOT,
             )
+            if result.returncode == 0:
+                with connect(connection) as conn:
+                    assert conn.execute("SELECT email FROM workspace_users").fetchall() == [("analyst@example.test",)]
+                    assert conn.execute("SELECT count(*) FROM workspace_sessions").fetchone() == (0,)
     print(f"Материалы прогона: {output.relative_to(ROOT)}", flush=True)
     return result.returncode
 

@@ -512,6 +512,56 @@ test('A36 · импорт источника и выбор загруженно�
   assert.equal(defaultRating.rating_id, riaDataset.rating_id);
 });
 
+test('A37 · регистрация по email, кабинет аналитика и выход', async page => {
+  const ratings = urls.auth + '/workspace/api/v1/ratings';
+  const emailEndpoint = urls.auth + '/auth/api/v1/email';
+  const verifyEndpoint = urls.auth + '/auth/api/v1/verify';
+  const email = 'analyst@example.test';
+  assert.equal((await page.request.get(ratings)).status(), 401);
+  assert.equal((await page.request.post(emailEndpoint, {data: {email: 'a@'}})).status(), 400);
+  assert.equal((await page.request.post(urls.ria + '/auth/api/v1/email', {data: {email}})).status(), 503);
+
+  await page.goto(urls.auth + '/workspace/');
+  assert.ok(page.url().endsWith('/login/'));
+  await page.getByLabel('Email', {exact: true}).fill('Analyst@example.test');
+  await page.getByRole('button', {name: 'Получить ссылку'}).click();
+  await page.getByRole('status').filter({hasText: 'Проверьте почту'}).waitFor();
+
+  const messages = async () => (await readFile(urls.mailbox, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+  const [{email: recipient, link}] = await messages();
+  assert.equal(recipient, email);
+  assert.equal((await page.request.post(emailEndpoint, {data: {email}})).status(), 202);
+  assert.equal((await messages()).length, 1);
+  const token = new URLSearchParams(new URL(link).hash.slice(1)).get('token');
+  await page.goto(link);
+  assert.equal((await page.request.get(ratings)).status(), 401);
+  await page.getByRole('button', {name: 'Подтвердить вход'}).click();
+  await page.waitForURL('**/workspace/');
+  await page.locator('#workspace-email').filter({hasText: email}).waitFor();
+  assert.equal((await page.request.post(verifyEndpoint, {data: {token}})).status(), 400);
+  assert.equal((await page.request.get(urls.auth + '/admin/api/v1/sources')).status(), 401);
+  const cookie = (await page.context().cookies()).find(item => item.name === 'i16_workspace');
+  assert.equal(cookie.httpOnly, true);
+  assert.equal(cookie.sameSite, 'Lax');
+  assert.equal((await page.request.get(urls.ria + '/workspace/api/v1/ratings')).status(), 200);
+  await page.getByRole('link', {name: 'Рейтинг из нового источника'}).click();
+  await page.locator('#report').waitFor();
+  await page.locator('#baseline').selectOption('2024');
+  const comparison = await submit(page);
+  assert.equal(comparison.rating_title, 'Рейтинг из нового источника');
+  assert.equal(comparison.baseline.period, '2024');
+  await page.getByRole('link', {name: 'Рабочая область'}).click();
+  await page.getByRole('button', {name: 'Выйти'}).click();
+  await page.waitForURL('**/login/');
+  assert.equal((await page.request.get(ratings, {headers: {Cookie: `${cookie.name}=${cookie.value}`}})).status(), 401);
+
+  assert.equal((await page.request.post(emailEndpoint, {data: {email: 'expired@example.test'}})).status(), 202);
+  const expiredLink = (await messages()).find(item => item.email === 'expired@example.test').link;
+  await page.goto(expiredLink);
+  await page.getByRole('button', {name: 'Подтвердить вход'}).click();
+  await page.getByRole('status').filter({hasText: 'Ссылка истекла'}).waitFor();
+});
+
 if (urls.live) {
   test('T09 · живая модель на публичной выборке РИА', async page => {
     page.setDefaultTimeout(15000);

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>И16 · Вход по email</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/workspace.js" defer></script>
+</head>
+<body class="has-executive">
+  <header class="hero">
+    <div class="wrap">
+      <p class="kicker">И16</p>
+      <h1>Вход по email</h1>
+    </div>
+  </header>
+  <main class="wrap">
+    <a href="/">Вернуться к рейтингу</a>
+    <section class="workspace-access" aria-labelledby="email-heading">
+      <h2 id="email-heading">Рабочая область аналитика</h2>
+      <form id="email-form">
+        <p>Введите email. Мы пришлём ссылку для регистрации или входа.</p>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <button type="submit">Получить ссылку</button>
+      </form>
+      <form id="verify-form" hidden>
+        <p>Подтвердите вход, чтобы открыть рабочую область.</p>
+        <button type="submit">Подтвердить вход</button>
+      </form>
+      <p id="workspace-status" role="status"></p>
+    </section>
+  </main>
+</body>
+</html>

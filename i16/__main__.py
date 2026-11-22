@@ -69,6 +69,7 @@ def _database(args):
         else:
             from .admin import configured_admin
             from .ai import configured_provider
+            from .email_access import configured_auth_origin, configured_mailer
             from .refresh import RiaRefresh, run_ria_check
             from .ria import RIA_ID
             from .server import make_server
@@ -80,7 +81,8 @@ def _database(args):
                 worker = RiaRefresh(lambda trigger: run_ria_check(store, trigger), args.refresh_ria * 3600)
             with make_server(store, args.rating_id, args.port, configured_provider(), admin=configured_admin(),
                              refresh_status=worker.status if worker else None,
-                             refresh_request=worker.request_check if worker else None) as server:
+                             refresh_request=worker.request_check if worker else None,
+                             mailer=configured_mailer(), auth_origin=configured_auth_origin()) as server:
                 print(f"И16 открыт по адресу http://127.0.0.1:{server.server_port}/", flush=True)
                 if worker:
                     worker.start()
