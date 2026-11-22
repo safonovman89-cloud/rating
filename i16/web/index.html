@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>И16 · Сравнение субъектов по рейтингу</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <p class="kicker">И16 · Аналитическая справка <span id="demo-label" hidden>Демонстрационные данные</span></p>
+      <h1>Сравнение субъектов<br>по рейтингу</h1>
+      <p id="rating-title" class="rating-title"></p>
+    </div>
+  </header>
+  <main class="wrap">
+    <form id="comparison-form">
+      <fieldset id="settings" disabled>
+        <legend>Параметры сравнения</legend>
+        <div class="periods">
+          <label>Текущий период<select id="period" required></select></label>
+          <label>Базовый период<select id="baseline"></select></label>
+          <label>Опорный субъект<select id="focus"></select></label>
+        </div>
+        <fieldset class="subjects">
+          <legend>Субъекты · выберите минимум два</legend>
+          <div id="subjects" class="choices"></div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit" value="template">Сравнить</button>
+          <button class="secondary" type="submit" value="ai">Справка с ИИ</button>
+        </div>
+      </fieldset>
+    </form>
+    <p id="status" role="status"></p>
+    <button id="retry" type="button" class="secondary" hidden>Загрузить справочник</button>
+    <article id="report" hidden></article>
+  </main>
+</body>
+</html>
