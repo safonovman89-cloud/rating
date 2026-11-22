@@ -92,8 +92,9 @@ function updateReportNotice() {
   staleReport.hidden = output.hidden || !stale;
   executiveStale.hidden = !stale;
   executiveDetails.hidden = output.hidden;
-  printButton.disabled = output.hidden || stale;
-  regionMap.setStale(output.hidden || stale);
+  const unavailable = settings.disabled || output.hidden || stale;
+  printButton.disabled = unavailable;
+  regionMap.setStale(unavailable);
 }
 
 function updateOptions() {
@@ -458,6 +459,7 @@ function render(result) {
 }
 
 async function runComparison(ai = false) {
+  if (settings.disabled) return;
   const body = comparisonParameters();
   if (body.subject_ids.length < 2) {
     message('Выберите не менее двух субъектов.', true);
@@ -468,7 +470,6 @@ async function runComparison(ai = false) {
   if (body.baseline) query.set('baseline', body.baseline);
   if (body.focus_subject_id) query.set('focus_subject', body.focus_subject_id);
   settings.disabled = true;
-  output.hidden = true;
   updateReportNotice();
   message(ai ? 'Подготавливаем справку…' : 'Загружаем сравнение…');
   try {
@@ -477,12 +478,12 @@ async function runComparison(ai = false) {
     }) : await request(`/api/v1/comparisons?${query}`);
     render(result);
     displayedParameters = JSON.stringify(body);
-    updateReportNotice();
     message(ai && result.brief_mode === 'template' ? 'ИИ недоступен. Показана справка по шаблону.' : '');
   } catch (error) {
     message(error.message, true);
   } finally {
     settings.disabled = false;
+    updateReportNotice();
   }
 }
 

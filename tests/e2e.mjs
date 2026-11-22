@@ -114,12 +114,17 @@ test('A16 · частичная справка и повтор после сет
   assert.equal(result.partial, true);
   assert.match(await page.locator('.limits').innerText(), /охват|состав/i);
   assert.deepEqual(await cells(page, 'Таблица сравнения', 'demo-a'), ['2', '82,50', '4', '76,00', '—', '+6,50']);
+  await page.locator('#baseline').selectOption('');
   await page.route('**/api/v1/comparisons?*', route => route.abort('connectionfailed'), {times: 1});
   await compare(page).click();
   await page.getByText('Сервер недоступен. Повторите запрос.', {exact: true}).waitFor();
   assert.ok(await compare(page).isEnabled());
+  assert.ok(await page.locator('#report').isVisible());
+  assert.ok(await page.locator('#stale-report').isVisible());
+  assert.match(await page.locator('#report .context').innerText(), /База 2024/);
   result = await submit(page);
-  assert.equal(result.partial, true);
+  assert.equal(result.baseline, null);
+  assert.equal(await page.locator('#stale-report').isVisible(), false);
   await page.goto(urls.databaseOffline);
   await page.getByText('PostgreSQL недоступен.', {exact: false}).waitFor();
   assert.ok(await page.getByRole('button', {name: 'Загрузить справочник'}).isVisible());
@@ -487,7 +492,10 @@ test('A36 · импорт источника и выбор загруженно�
   const context = await browser.newContext({httpCredentials: adminCredentials});
   try {
     const panel = await context.newPage();
+    await panel.route('**/api/v1/refresh', route => route.abort('connectionfailed'), {times: 1});
     await panel.goto(urls.admin + '/admin/');
+    await panel.locator('#admin-state').filter({hasText: 'Не удалось загрузить состояние проверки'}).waitFor();
+    await panel.locator('#admin-sources-table').waitFor();
     await panel.getByLabel('Файл рейтинга').setInputFiles({
       name: 'rating.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(dataset)),
     });

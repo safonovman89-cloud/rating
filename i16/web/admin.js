@@ -122,14 +122,13 @@ async function status() {
     button.disabled = !data.enabled || data.running;
     const previous = lastCheck;
     lastCheck = data.checked_at ?? null;
-    if (previous !== lastCheck) {
+    if (previous !== undefined && previous !== lastCheck) {
       loadAnalytics();
       loadSources();
     }
     if (data.running) window.setTimeout(status, 1000);
   } catch {
     stateLabel.textContent = 'Не удалось загрузить состояние проверки';
-    if (lastCheck === undefined) loadAnalytics();
   }
 }
 
@@ -172,4 +171,6 @@ importForm.addEventListener('submit', async event => {
   }
 });
 
+loadAnalytics();
+loadSources();
 status();
