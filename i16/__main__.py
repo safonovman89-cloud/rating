@@ -73,6 +73,7 @@ def _database(args):
             from .refresh import RiaRefresh, run_ria_check
             from .ria import RIA_ID
             from .server import make_server
+            from .service_help import configured_help_provider
 
             worker = None
             if args.refresh_ria is not None:
@@ -82,7 +83,8 @@ def _database(args):
             with make_server(store, args.rating_id, args.port, configured_provider(), admin=configured_admin(),
                              refresh_status=worker.status if worker else None,
                              refresh_request=worker.request_check if worker else None,
-                             mailer=configured_mailer(), auth_origin=configured_auth_origin()) as server:
+                             mailer=configured_mailer(), auth_origin=configured_auth_origin(),
+                             help_provider=configured_help_provider()) as server:
                 print(f"И16 открыт по адресу http://127.0.0.1:{server.server_port}/", flush=True)
                 if worker:
                     worker.start()

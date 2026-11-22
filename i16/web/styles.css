@@ -74,6 +74,8 @@ main { padding-block: 28px 48px; }
 .help-response section + section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
 .help-response h3, .help-response p { margin: 0 0 6px; }
 .help-response p:last-child { margin-bottom: 0; }
+.help-response p { overflow-wrap: anywhere; }
+.help-generated { white-space: pre-line; }
 .workspace-access { max-width: 540px; margin-top: 20px; padding: 20px; border: 1px solid var(--line); }
 #email-form input { display: block; width: 100%; padding: 8px; margin: 6px 0 12px; border: 1px solid var(--line); font: inherit; }
 .workspace-account { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 24px; }

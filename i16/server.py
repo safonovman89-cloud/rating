@@ -10,6 +10,7 @@ from .dataset import InputError, parse_dataset, rating_identifier
 from .email_access import SESSION_SECONDS, email_address, session_cookie, session_hash, token_hash
 from .payloads import comparison_payload, map_payload, payload_json, rating_payload
 from .postgres import RatingMissing, SourceConflict, StoreError
+from .service_help import service_help
 
 
 WEB = Path(__file__).with_name("web")
@@ -23,6 +24,7 @@ STATIC = {
     "/login/": ("login.html", "text/html; charset=utf-8"),
     "/workspace.js": ("workspace.js", "text/javascript; charset=utf-8"),
     "/help.js": ("help.js", "text/javascript; charset=utf-8"),
+    "/help-topics.json": ("help-topics.json", "application/json; charset=utf-8"),
 }
 
 
@@ -56,7 +58,7 @@ def _body_params(body):
 
 
 def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=None, admin=None,
-                refresh_request=None, mailer=None, auth_origin=None):
+                refresh_request=None, mailer=None, auth_origin=None, help_provider=None):
     class Handler(BaseHTTPRequestHandler):
         def _send(self, status, content, media, headers=()):
             self.send_response(status)
@@ -130,6 +132,8 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 if method == "POST" and path == "/api/v1/briefs":
                     selected, _ = _query_params(requested.query)
                     return self._comparison(selected or rating_id, _body_params(self._read_body()), provider)
+                if method == "POST" and path == "/api/v1/help":
+                    return self._json(200, service_help(self._read_body(), help_provider))
                 return self._error(404, "not_found", "Страница не найдена.")
             except ValueError as error:
                 return self._error(400, "invalid_request", str(error))

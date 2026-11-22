@@ -25,6 +25,7 @@ from i16.dataset import load_dataset
 from i16.postgres import Postgres
 from i16.refresh import RiaRefresh, run_ria_check
 from i16.server import make_server
+from i16.service_help import configured_help_provider
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -233,6 +234,16 @@ def provider_offline(_):
     raise OSError("I16 test provider unavailable")
 
 
+def help_provider(context):
+    if context["question"] == "Как прочесть заливку карты?":
+        assert context["page"] == "Рейтинг и сравнение" and context["section"] == "Параметры сравнения"
+        assert [item["id"] for item in context["reference"]] == ["map"]
+        return {"answer": "Заливка региона показывает значение выбранного показателя рейтинга РИА.", "topics": ["map"]}
+    if context["question"] == "Как понять карту?":
+        return {"answer": "Тест отклонения неизвестного раздела.", "topics": ["unknown"]}
+    raise AssertionError("Неожиданный запрос к модели помощника")
+
+
 def admin_test_refresh(store, trigger):
     sleep(1)
     store.record_refresh(RIA_ID, datetime.now(timezone.utc), trigger, "unchanged", 1000, None)
@@ -242,7 +253,7 @@ def admin_test_refresh(store, trigger):
 def live_provider():
     select = configured_provider()
     if select is None:
-        raise SystemExit("Для живой проверки задайте I16_AI_URL, I16_AI_MODEL и I16_AI_API_KEY.")
+        raise SystemExit("Для живой проверки настройте I16_AI_URL и I16_AI_MODEL, а для удалённого шлюза укажите ключ.")
 
     def report_http_status(facts):
         try:
@@ -256,6 +267,9 @@ def live_provider():
 
 def main():
     live = live_provider() if os.environ.get("I16_E2E_LIVE_AI") == "1" else None
+    live_help = configured_help_provider() if os.environ.get("I16_E2E_LIVE_HELP") == "1" else None
+    if os.environ.get("I16_E2E_LIVE_HELP") == "1" and live_help is None:
+        raise SystemExit("Для живой проверки помощника настройте модель И16.")
     output_root = ROOT / "build/e2e"
     output_root.mkdir(parents=True, exist_ok=True)
     output = Path(mkdtemp(prefix="run-", dir=output_root))
@@ -280,6 +294,9 @@ def main():
             if live:
                 configurations["live"] = (RIA_ID, live)
             urls = {key: stack.enter_context(server(connection, *args)) for key, args in configurations.items()}
+            urls["help"] = stack.enter_context(server(connection, RIA_ID, help_provider=help_provider))
+            if live_help:
+                urls["liveHelp"] = stack.enter_context(server(connection, RIA_ID, help_provider=live_help))
             store = Postgres(connection)
             store.record_refresh(RIA_ID, datetime.now(timezone.utc) - timedelta(days=31), "cli", "updated", 5, None)
             credentials = admin_credentials("test-admin", "test-admin-password")

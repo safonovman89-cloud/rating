@@ -543,7 +543,7 @@ test('A37 · регистрация по email, кабинет аналитик�
   const help = page.getByRole('dialog', {name: 'Помощник по сервису'});
   await help.getByLabel('Что хотите узнать?').fill('Что делает эта панель?');
   await help.getByRole('button', {name: 'Спросить', exact: true}).click();
-  assert.match(await help.getByRole('status').innerText(), /доступные рейтинги и годы выпусков/);
+  await help.getByRole('status').filter({hasText: 'доступные рейтинги и годы выпусков'}).waitFor();
   await help.getByRole('button', {name: 'Закрыть', exact: true}).click();
   assert.equal((await page.request.post(verifyEndpoint, {data: {token}})).status(), 400);
   assert.equal((await page.request.get(urls.auth + '/admin/api/v1/sources')).status(), 401);
@@ -581,7 +581,7 @@ test('A38 · помощник отвечает на вопросы о разде
     await help.getByRole('button', {name: 'Спросить', exact: true}).click();
   };
   await ask('Объясни, что показывают цвета на карте');
-  assert.match(await answer.innerText(), /балл или место каждого региона/);
+  await answer.filter({hasText: 'балл или место каждого региона'}).waitFor();
   await answer.getByRole('link', {name: 'Перейти к разделу'}).click();
   assert.ok(page.url().endsWith('#regional-map'));
   assert.equal(await help.isVisible(), false);
@@ -589,12 +589,12 @@ test('A38 · помощник отвечает на вопросы о разде
   await page.setViewportSize({width: 375, height: 812});
   await page.getByRole('button', {name: 'Помощник', exact: true}).click();
   await ask('Зачем нужен базовый год?');
-  assert.match(await answer.innerText(), /Базовый период — год/);
+  await answer.filter({hasText: 'Базовый период — год'}).waitFor();
   assert.ok((await help.boundingBox()).width <= 375);
   await ask('Какой рецепт борща?');
-  assert.match(await answer.innerText(), /Выберите тему выше/);
+  await answer.filter({hasText: 'Выберите тему выше'}).waitFor();
   await help.getByRole('button', {name: 'Параметры сравнения'}).click();
-  assert.match(await answer.innerText(), /минимум два субъекта/);
+  await answer.filter({hasText: 'минимум два субъекта'}).waitFor();
   await page.keyboard.press('Escape');
   assert.equal(await help.isVisible(), false);
 
@@ -607,12 +607,57 @@ test('A38 · помощник отвечает на вопросы о разде
     await adminHelp.getByLabel('Что хотите узнать?').fill('Где посмотреть журнал последних запусков?');
     await adminHelp.getByRole('button', {name: 'Спросить', exact: true}).click();
     const explanation = adminHelp.getByRole('status');
-    assert.match(await explanation.innerText(), /Журнал показывает/);
+    await explanation.filter({hasText: 'Журнал показывает'}).waitFor();
     assert.equal(await explanation.getByRole('link').getAttribute('href'), '#admin-analytics-title');
   } finally {
     await context.close();
   }
 });
+
+test('A39 · ответ модели помощника и резервная подсказка', async page => {
+  const endpoint = '/api/v1/help';
+  const askApi = (url, question) => page.request.post(url + endpoint, {data: {page: 'rating', question}});
+  assert.equal((await askApi(urls.help, '   ')).status(), 400);
+  assert.equal((await askApi(urls.help, 'а'.repeat(281))).status(), 400);
+  const unavailable = await askApi(urls.ria, 'Покажи карту');
+  assert.deepEqual(await unavailable.json(), {mode: 'reference', answer: null, topics: ['map']});
+  await ready(page, urls.help);
+  await page.locator('#regional-map').waitFor();
+  await page.getByRole('button', {name: 'Помощник', exact: true}).click();
+  const help = page.getByRole('dialog', {name: 'Помощник по сервису'});
+  const answer = help.getByRole('status');
+  const ask = async question => {
+    await help.getByLabel('Что хотите узнать?').fill(question);
+    await help.getByRole('button', {name: 'Спросить', exact: true}).click();
+  };
+  await ask('Как прочесть заливку карты?');
+  await answer.filter({hasText: 'Ответ LLM'}).waitFor();
+  assert.match(await answer.innerText(), /Заливка региона показывает значение выбранного показателя/);
+  assert.equal(await answer.getByRole('link').getAttribute('href'), '#regional-map');
+  await ask('Как понять карту?');
+  await answer.filter({hasText: 'Ответ из справочника'}).waitFor();
+  assert.match(await answer.innerText(), /Карта рейтинга РИА показывает/);
+  assert.doesNotMatch(await answer.innerText(), /Тест отклонения/);
+});
+
+if (urls.liveHelp) {
+  test('A39 · живая LLM отвечает в браузере', async page => {
+    page.setDefaultTimeout(65000);
+    await ready(page, urls.liveHelp);
+    await page.getByRole('button', {name: 'Помощник', exact: true}).click();
+    const help = page.getByRole('dialog');
+    const response = page.waitForResponse(result => result.url().endsWith('/api/v1/help'));
+    await help.getByLabel('Что хотите узнать?').fill('Что показывает карта регионов России?');
+    await help.getByRole('button', {name: 'Спросить', exact: true}).click();
+    const result = await response;
+    assert.equal(result.status(), 200);
+    const body = await result.json();
+    assert.equal(body.mode, 'llm');
+    assert.match(body.answer, /балл|место/i);
+    assert.ok(body.topics.includes('map'));
+    await help.getByRole('status').filter({hasText: 'Ответ LLM'}).waitFor();
+  });
+}
 
 if (urls.live) {
   test('T09 · живая модель на публичной выборке РИА', async page => {
