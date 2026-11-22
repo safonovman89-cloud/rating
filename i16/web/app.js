@@ -36,6 +36,14 @@ let refreshTimer;
 let activeReportTab = 'rating';
 const regionMap = createRegionMap({request, element, sourceLink, valueText, addSubject});
 
+const pageTop = document.querySelector('#page-top');
+const backToTop = document.querySelector('#back-to-top');
+new IntersectionObserver(([entry]) => { backToTop.hidden = entry.isIntersecting; }).observe(pageTop);
+backToTop.addEventListener('click', () => {
+  pageTop.querySelector('h1').focus({preventScroll: true});
+  window.scrollTo(0, 0);
+});
+
 function element(tag, text, style) {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;

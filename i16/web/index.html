@@ -11,7 +11,7 @@
   <script src="/help.js" defer></script>
 </head>
 <body>
-  <header class="hero">
+  <header class="hero" id="page-top">
     <div class="wrap">
       <div class="hero-nav">
         <p class="kicker">И16 · Аналитическая справка <span id="demo-label" hidden>Демонстрационные данные</span></p>
@@ -22,7 +22,7 @@
           <label class="theme-setting" hidden>Тема <select id="theme"></select></label>
         </div>
       </div>
-      <h1>Сравнение субъектов <br>по рейтингу</h1>
+      <h1 tabindex="-1">Сравнение субъектов <br>по рейтингу</h1>
       <p id="rating-title" class="rating-title"></p>
     </div>
   </header>
@@ -106,6 +106,7 @@
     <div role="status"><p id="stale-report" class="stale-report" hidden>Параметры изменились. Нажмите «Сравнить».</p></div>
     <article id="report" hidden></article>
   </main>
+  <button type="button" class="secondary back-to-top" id="back-to-top" hidden><span aria-hidden="true">↑</span> Наверх</button>
   <dialog id="feedback-dialog" aria-labelledby="feedback-title">
     <form id="feedback-form">
       <h2 id="feedback-title">Сообщение разработчику</h2>

@@ -868,6 +868,25 @@ test('A43 · вкладки и итоговый PDF по одному сравн
   assert.ok(await print.isVisible());
 });
 
+test('A44 · возврат наверх на узком экране', async page => {
+  await page.setViewportSize({width: 375, height: 760});
+  await ready(page, urls.ria);
+  const button = page.getByRole('button', {name: 'Наверх', exact: true});
+  assert.equal(await button.isVisible(), false);
+  await page.locator('#report').scrollIntoViewIfNeeded();
+  await button.waitFor();
+  const bounds = await button.boundingBox();
+  assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 375 && bounds.y + bounds.height <= 760);
+  await button.press('Enter');
+  await button.waitFor({state: 'hidden'});
+  assert.equal(await page.evaluate(() => window.scrollY), 0);
+  assert.ok(await page.locator('#page-top h1').evaluate(title => document.activeElement === title));
+  await page.locator('#report').scrollIntoViewIfNeeded();
+  await button.waitFor();
+  await page.emulateMedia({media: 'print'});
+  assert.equal(await button.isVisible(), false);
+});
+
 if (urls.liveHelp) {
   test('A39 · живая LLM отвечает в браузере', async page => {
     page.setDefaultTimeout(65000);
