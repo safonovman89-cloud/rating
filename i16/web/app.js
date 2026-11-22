@@ -1,3 +1,5 @@
+import { createRegionMap } from './russia-map.js';
+
 const form = document.querySelector('#comparison-form');
 const settings = document.querySelector('#settings');
 const period = document.querySelector('#period');
@@ -26,6 +28,8 @@ const checks = [
 let catalog;
 let displayedParameters;
 let executiveReport;
+let refreshTimer;
+const regionMap = createRegionMap({request, element, sourceLink, valueText, addSubject});
 
 function element(tag, text, style) {
   const node = document.createElement(tag);
@@ -83,6 +87,7 @@ function updateReportNotice() {
   executiveStale.hidden = !stale;
   executiveDetails.hidden = output.hidden;
   printButton.disabled = output.hidden || stale;
+  regionMap.setStale(output.hidden || stale);
 }
 
 function updateOptions() {
@@ -125,6 +130,37 @@ function renderPresets() {
   }
   presets.replaceChildren(...buttons);
   presets.hidden = buttons.length === 0;
+}
+
+function addSubject(identifier) {
+  for (const input of subjects.querySelectorAll('input')) {
+    if (input.value === identifier) input.checked = true;
+  }
+  updateOptions();
+  runComparison();
+}
+
+async function updateRefreshStatus() {
+  const info = document.querySelector('#ria-refresh-status');
+  try {
+    const state = await request('/api/v1/refresh');
+    if (!state.enabled) return;
+    const format = new Intl.DateTimeFormat('ru-RU', {dateStyle: 'short', timeStyle: 'short'});
+    const checked = state.checked_at ? format.format(new Date(state.checked_at)) : '';
+    const next = format.format(new Date(state.next_check_at));
+    const summary = {
+      waiting: 'Проверяем источник РИА…',
+      updated: `Данные РИА обновлены ${checked}`,
+      unchanged: `Источник РИА проверен ${checked}`,
+      error: `Проверка не удалась ${checked}. Используются сохранённые данные`,
+    }[state.state];
+    info.textContent = state.state === 'waiting' ? summary : `${summary} · следующая проверка ${next}`;
+    info.title = state.error ?? '';
+    info.hidden = false;
+    refreshTimer ??= window.setInterval(updateRefreshStatus, 60000);
+  } catch {
+    info.hidden = true;
+  }
 }
 
 function valueText(value, signed = false) {
@@ -411,6 +447,7 @@ function render(result) {
   }
   output.append(reportSources(result));
   renderExecutive(result);
+  if (catalog.rating_id === riaId) regionMap.update(result);
   output.hidden = false;
 }
 
@@ -453,6 +490,7 @@ async function load() {
     document.querySelector('#demo-label').hidden = catalog.data_kind !== 'demo';
     period.replaceChildren(...catalog.periods.map(year => new Option(year, year)));
     const isRia = catalog.rating_id === riaId;
+    if (isRia) updateRefreshStatus();
     document.body.classList.toggle('has-executive', isRia);
     const suggested = isRia ? ['yanao', 'khmao-yugra'] : ['demo-a', 'demo-b', 'demo-c'];
     subjects.replaceChildren(...catalog.subjects.map(subject => {

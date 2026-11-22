@@ -6,7 +6,7 @@
   <title>И16 · Сравнение субъектов по рейтингу</title>
   <link rel="icon" href="/favicon.ico">
   <link rel="stylesheet" href="/styles.css">
-  <script src="/app.js" defer></script>
+  <script src="/app.js" type="module"></script>
 </head>
 <body>
   <header class="hero">
@@ -22,10 +22,12 @@
         <div>
           <h2 id="executive-title"></h2>
           <p id="executive-source" class="note"></p>
+          <p id="ria-refresh-status" class="note" role="status" hidden></p>
         </div>
         <div class="executive-actions">
           <button id="executive-print-button" type="button">Справка на 1 страницу</button>
           <a id="executive-details" href="#report">Подробное сравнение</a>
+          <a href="#regional-map">Карта регионов</a>
         </div>
       </div>
       <div role="status"><p id="executive-stale" class="stale-report" hidden>Параметры изменились. Нажмите «Сравнить».</p></div>
@@ -58,6 +60,37 @@
     </form>
     <p id="status" role="status"></p>
     <button id="retry" type="button" class="secondary" hidden>Загрузить справочник</button>
+    <section id="regional-map" aria-labelledby="map-heading" hidden>
+      <div class="map-head">
+        <div>
+          <h2 id="map-heading">Карта регионов России</h2>
+          <p id="map-context" class="note"></p>
+        </div>
+        <label>Показатель<select id="map-indicator" disabled></select></label>
+      </div>
+      <p id="map-status" role="status" hidden></p>
+      <button id="map-retry" type="button" class="secondary" hidden>Загрузить карту снова</button>
+      <div id="map-content" hidden>
+        <div class="map-layout">
+          <div class="map-stage">
+            <svg id="map-shapes" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div class="map-zoom" role="group" aria-label="Масштаб карты">
+              <button type="button" class="secondary" id="map-zoom-in" aria-label="Увеличить карту">+</button>
+              <button type="button" class="secondary" id="map-zoom-out" aria-label="Уменьшить карту">−</button>
+              <button type="button" class="secondary" id="map-reset">Вся карта</button>
+            </div>
+          </div>
+          <div class="map-inspector">
+            <label>Регион<select id="map-region"></select></label>
+            <dl id="map-region-values"></dl>
+            <button type="button" id="map-add">Добавить к сравнению</button>
+          </div>
+        </div>
+        <ul id="map-legend" class="map-legend" aria-label="Легенда карты"></ul>
+        <p id="map-limits" class="note" hidden></p>
+        <p class="note">Границы · <a href="https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/">Natural Earth</a></p>
+      </div>
+    </section>
     <div role="status"><p id="stale-report" class="stale-report" hidden>Параметры изменились. Нажмите «Сравнить».</p></div>
     <article id="report" hidden></article>
   </main>

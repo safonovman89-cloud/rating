@@ -32,11 +32,10 @@ def _compare(args):
 
 
 def _prepare_ria(args):
-    from .ria import expanded_json
+    from .ria import PILOT, expanded_json
 
-    pilot_path = Path("examples/ria-pilot-dataset.json")
-    pilot = load_dataset(pilot_path)
-    if args.output.exists() and args.output.samefile(pilot_path):
+    pilot = load_dataset(PILOT)
+    if args.output.exists() and args.output.samefile(PILOT):
         raise InputError("Файл результата должен отличаться от контрольного набора РИА")
     result = expanded_json(args.source.read_text(encoding="utf-8"), pilot)
     _save_report(result, args.source, args.output)
@@ -58,16 +57,38 @@ def _database(args):
             dataset = load_dataset(args.dataset)
             store.save(dataset)
             print(f"Загружен рейтинг {dataset.rating_id}. Срезов: {len(dataset.snapshots)}.")
+        elif args.command == "refresh-ria":
+            from .refresh import refresh_ria
+
+            state = refresh_ria(store)
+            print("Срезы РИА загружены." if state == "updated" else "Источник РИА проверен, изменений нет.")
+        elif args.command == "mcp":
+            from .mcp import run_mcp
+
+            run_mcp(store, args.rating_id)
         else:
             from .ai import configured_provider
+            from .refresh import RiaRefresh, refresh_ria
+            from .ria import RIA_ID
             from .server import make_server
 
-            with make_server(store, args.rating_id, args.port, configured_provider()) as server:
+            worker = None
+            if args.refresh_ria is not None:
+                if args.rating_id != RIA_ID or not 1 <= args.refresh_ria <= 8760:
+                    raise InputError("--refresh-ria применяется к рейтингу РИА с интервалом от 1 до 8760 часов")
+                worker = RiaRefresh(lambda: refresh_ria(store), args.refresh_ria * 3600)
+            with make_server(store, args.rating_id, args.port, configured_provider(),
+                             refresh_status=worker.status if worker else None) as server:
                 print(f"И16 открыт по адресу http://127.0.0.1:{server.server_port}/", flush=True)
+                if worker:
+                    worker.start()
                 try:
                     server.serve_forever()
                 except KeyboardInterrupt:
                     pass
+                finally:
+                    if worker:
+                        worker.stop()
     except StoreError as error:
         raise OSError(str(error)) from error
 
@@ -88,13 +109,19 @@ def main(argv=None):
     preparation.add_argument("--output", required=True, type=Path)
     preparation.set_defaults(action=_prepare_ria)
     commands.add_parser("migrate", help="Развернуть схему PostgreSQL").set_defaults(action=_database)
+    commands.add_parser("refresh-ria", help="Проверить и обновить данные РИА один раз").set_defaults(action=_database)
     importer = commands.add_parser("import", help="Загрузить JSON-набор в PostgreSQL")
     importer.add_argument("--dataset", required=True, type=Path)
     importer.set_defaults(action=_database)
     serve = commands.add_parser("serve", help="Запустить веб-клиент и HTTP API на 127.0.0.1")
     serve.add_argument("--rating-id", default="demo-rating")
     serve.add_argument("--port", type=int, choices=range(1, 65536), metavar="PORT", default=8000)
+    serve.add_argument("--refresh-ria", type=int, nargs="?", const=24, metavar="HOURS",
+                       help="Проверять таблицу РИА при запуске и периодически. По умолчанию каждые 24 часа")
     serve.set_defaults(action=_database)
+    mcp = commands.add_parser("mcp", help="Запустить MCP-сервер по stdio")
+    mcp.add_argument("--rating-id", default="ria-social-economic-regions")
+    mcp.set_defaults(action=_database)
     args = parser.parse_args(argv)
     try:
         args.action(args)
@@ -105,6 +132,9 @@ def main(argv=None):
         print(f"Ошибка чтения или записи: {error}", file=sys.stderr)
         return 1
     except ModuleNotFoundError as error:
+        if error.name == "mcp":
+            print("Установите SDK MCP из requirements.txt.", file=sys.stderr)
+            return 1
         if error.name != "psycopg":
             raise
         print("Установите драйвер PostgreSQL из requirements.txt.", file=sys.stderr)

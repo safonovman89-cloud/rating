@@ -4,11 +4,15 @@ from dataclasses import asdict, dataclass
 from decimal import Decimal
 from html import unescape
 import json
+from pathlib import Path
 import re
 
 from .dataset import InputError, Observation, validate_dataset
 
 
+RIA_ID = "ria-social-economic-regions"
+PILOT = Path(__file__).resolve().parents[1] / "examples/ria-pilot-dataset.json"
+SOURCE_URL = "https://rfimage.ru/regional-ratings"
 TABLE = re.compile(
     r'<div\b[^>]*\bclass="t431__data-part1"[^>]*>([^<]*)</div>\s*'
     r'<div\b[^>]*\bclass="t431__data-part2"[^>]*>([^<]*)</div>'
@@ -67,7 +71,7 @@ def _subject_id(name):
     return re.sub(r"[^a-z0-9]+", "-", name.casefold().translate(TRANSLITERATION)).strip("-")
 
 
-def expanded_json(page, pilot):
+def expanded_payload(page, pilot):
     rows = _published_rows(page)
     known_ids = {name: identifier for identifier, name in pilot.subjects.items()}
     ids = {row.name: known_ids.get(row.name, _subject_id(row.name)) for row in rows}
@@ -88,10 +92,14 @@ def expanded_json(page, pilot):
         snapshot["rows"] = [{"subject_id": identifier, **asdict(row)} for identifier, row in observed.items()]
         snapshots.append(snapshot)
 
-    dataset = {
+    return {
         "schema_version": 1, "rating_id": pilot.rating_id, "rating_title": pilot.title, "data_kind": pilot.data_kind,
         "subjects": [{"subject_id": identifier, "name": name} for name, identifier in ids.items()],
         "snapshots": snapshots,
     }
+
+
+def expanded_json(page, pilot):
+    dataset = expanded_payload(page, pilot)
     validate_dataset(dataset)
     return json.dumps(dataset, ensure_ascii=False, indent=2, default=float) + "\n"

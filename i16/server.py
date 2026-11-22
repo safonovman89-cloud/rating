@@ -1,14 +1,11 @@
 import json
-from dataclasses import asdict
-from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from .ai import summarize
-from .brief import report_facts
-from .comparison import compare, latest_comparable_baseline
+from .comparison import compare
 from .dataset import InputError
+from .payloads import comparison_payload, map_payload, payload_json, rating_payload
 from .postgres import RatingMissing, StoreError
 
 
@@ -17,55 +14,10 @@ STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/russia-map.js": ("russia-map.js", "text/javascript; charset=utf-8"),
+    "/russia-regions.json": ("russia-regions.json", "application/json; charset=utf-8"),
     "/favicon.ico": ("favicon.ico", "image/vnd.microsoft.icon"),
 }
-
-
-def _snapshot(snapshot):
-    if snapshot is None:
-        return None
-    return {
-        "period": snapshot.period,
-        "population_size": snapshot.population_size,
-        "methodology_version": snapshot.methodology_version,
-        "source": {**asdict(snapshot.source), "published_on": snapshot.source.published_on.isoformat()},
-    }
-
-
-def _rating_json(rating):
-    periods = sorted(rating.snapshots, reverse=True)
-    return {
-        "rating_id": rating.rating_id, "rating_title": rating.title, "data_kind": rating.data_kind,
-        "periods": periods,
-        "default_baseline": latest_comparable_baseline(rating, periods[0]) if periods else None,
-        "leaders": {period: [subject for subject, row in sorted(snapshot.rows.items())
-                             if row.rank is not None and row.rank <= 3]
-                    for period, snapshot in rating.snapshots.items()},
-        "subjects": [{"subject_id": key, "name": name} for key, name in sorted(rating.subjects.items())],
-    }
-
-
-def _decimal_json(value):
-    if isinstance(value, Decimal):
-        return f"{0 if value.is_zero() else value:.2f}"
-    raise TypeError(f"Unsupported JSON type: {type(value).__name__}")
-
-
-def _report_json(report, provider=None):
-    mode, summary = summarize(report_facts(report), provider)
-    return {
-        "rating_title": report.title,
-        "data_kind": report.data_kind,
-        "current": _snapshot(report.current),
-        "baseline": _snapshot(report.baseline),
-        "rows": [asdict(row) for row in report.rows],
-        "focus_subject_id": report.focus_subject_id,
-        "gaps": [asdict(gap) for gap in report.gaps],
-        "summary": summary,
-        "partial": bool(report.limits),
-        "limits": report.limits,
-        "brief_mode": mode,
-    }
 
 
 def _query_params(query):
@@ -93,7 +45,7 @@ def _body_params(body):
     return body.get("period"), subjects, body.get("baseline"), body.get("focus_subject_id")
 
 
-def make_server(store, rating_id, port=8000, provider=None):
+def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=None):
     class Handler(BaseHTTPRequestHandler):
         def _send(self, status, content, media):
             self.send_response(status)
@@ -108,7 +60,7 @@ def make_server(store, rating_id, port=8000, provider=None):
                 pass
 
         def _json(self, status, result):
-            message = json.dumps(result, ensure_ascii=False, default=_decimal_json).encode("utf-8")
+            message = payload_json(result).encode("utf-8")
             self._send(status, message, "application/json; charset=utf-8")
 
         def _error(self, status, code, message):
@@ -134,10 +86,19 @@ def make_server(store, rating_id, port=8000, provider=None):
                 if method == "GET" and path in STATIC:
                     filename, media = STATIC[path]
                     return self._send(200, (WEB / filename).read_bytes(), media)
+                if method == "GET" and path == "/api/v1/refresh":
+                    return self._json(200, refresh_status() if refresh_status else {"enabled": False})
                 if method == "GET" and path == "/api/v1/rating":
-                    return self._json(200, _rating_json(store.load(rating_id)))
+                    return self._json(200, rating_payload(store.load(rating_id)))
                 if method == "GET" and path == "/api/v1/comparisons":
                     return self._comparison(_query_params(requested.query))
+                if method == "GET" and path == "/api/v1/map":
+                    period, subjects, baseline, focus = _query_params(requested.query)
+                    if subjects or focus is not None:
+                        raise InputError("Для карты укажите текущий и, при необходимости, базовый период")
+                    rating = store.load(rating_id)
+                    report = compare(rating, list(rating.subjects), period, baseline)
+                    return self._json(200, map_payload(report))
                 if method == "POST" and path == "/api/v1/briefs":
                     return self._comparison(_body_params(self._read_body()), provider)
                 return self._error(404, "not_found", "Страница не найдена.")
@@ -152,7 +113,7 @@ def make_server(store, rating_id, port=8000, provider=None):
             period, subjects, baseline, focus = params
             rating = store.load(rating_id)
             report = compare(rating, subjects, period, baseline, focus)
-            return self._json(200, _report_json(report, selector))
+            return self._json(200, comparison_payload(report, selector))
 
         def _read_body(self):
             if self.headers.get_content_type() != "application/json":

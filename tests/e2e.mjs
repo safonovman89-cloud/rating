@@ -336,6 +336,60 @@ test('A29 · справка руководителя на одной стран�
   }
 });
 
+test('A31 · карта регионов, показатели и добавление к сравнению', async page => {
+  await page.route('**/russia-regions.json', route => route.abort('failed'), {times: 1});
+  await ready(page, urls.ria);
+  const map = page.locator('#regional-map');
+  await map.getByText('Не удалось загрузить карту.', {exact: true}).waitFor();
+  assert.ok(await page.locator('#report').isVisible());
+  await map.getByRole('button', {name: 'Загрузить карту снова'}).click();
+  await map.locator('#map-content').waitFor({state: 'visible'});
+  assert.equal(await map.locator('svg path').count(), 85);
+  assert.equal(await map.locator('svg path.compared').count(), 2);
+
+  const expanded = riaDataset.subjects.length === 85;
+  const id = expanded ? 'novosibirskaya-oblast' : 'sverdlovsk-oblast';
+  const names = expanded ? ['61,52', '19', '−1', '−2,28'] : ['77,77', '5', '+1', '−1,64'];
+  const shape = map.locator(`path[data-region="${id}"]`);
+  const metric = map.getByLabel('Показатель');
+  for (const [i, key] of ['score', 'rank', 'rank_delta', 'score_delta'].entries()) {
+    await metric.selectOption(key);
+    assert.equal(await shape.getAttribute('data-value'), names[i]);
+  }
+  if (!expanded) assert.equal(await map.locator('path[data-region="novosibirskaya-oblast"]').getAttribute('data-value'), '—');
+
+  await map.locator('svg').scrollIntoViewIfNeeded();
+  const point = await shape.evaluate(path => {
+    const bounds = path.getBBox();
+    for (let y = 2; y < 9; y++) {
+      for (let x = 2; x < 9; x++) {
+        const candidate = new DOMPoint(bounds.x + x * bounds.width / 10, bounds.y + y * bounds.height / 10);
+        if (path.isPointInFill(candidate)) return candidate.matrixTransform(path.getScreenCTM()).toJSON();
+      }
+    }
+    throw new Error('У контура отсутствует внутренняя точка');
+  });
+  await page.mouse.click(point.x, point.y);
+  assert.equal(await map.getByLabel('Регион').inputValue(), id);
+  assert.equal(await map.locator('dl dd').last().textContent(), names[3]);
+  assert.equal(await shape.getAttribute('class'), 'map-region-shape active');
+  await map.getByRole('button', {name: 'Увеличить карту'}).click();
+  assert.notEqual(await map.locator('svg').getAttribute('viewBox'), '0 0 1000 556');
+  await map.getByRole('button', {name: 'Вся карта'}).click();
+
+  const comparison = await submit(page, map.getByRole('button', {name: 'Добавить к сравнению'}));
+  assert.equal(comparison.focus_subject_id, 'yanao');
+  assert.ok(comparison.rows.some(row => row.subject_id === id));
+  assert.equal(comparison.rows.length, 3);
+  assert.ok(await map.getByRole('button', {name: 'Уже в сравнении'}).isDisabled());
+  await page.locator('#baseline').selectOption('');
+  await submit(page);
+  await metric.locator('option[value="score_delta"]').waitFor({state: 'detached'});
+  assert.equal(await metric.locator('option').count(), 2);
+  await page.setViewportSize({width: 375, height: 812});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 375);
+});
+
 if (urls.live) {
   test('T09 · живая модель на публичной выборке РИА', async page => {
     page.setDefaultTimeout(15000);
