@@ -31,6 +31,18 @@ def _compare(args):
     print(args.output)
 
 
+def _prepare_ria(args):
+    from .ria import expanded_json
+
+    pilot_path = Path("examples/ria-pilot-dataset.json")
+    pilot = load_dataset(pilot_path)
+    if args.output.exists() and args.output.samefile(pilot_path):
+        raise InputError("Файл результата должен отличаться от контрольного набора РИА")
+    result = expanded_json(args.source.read_text(encoding="utf-8"), pilot)
+    _save_report(result, args.source, args.output)
+    print(args.output)
+
+
 def _database(args):
     from .postgres import Postgres, StoreError
 
@@ -71,6 +83,10 @@ def main(argv=None):
     comparison.add_argument("--focus-subject")
     comparison.add_argument("--output", required=True, type=Path)
     comparison.set_defaults(action=_compare)
+    preparation = commands.add_parser("prepare-ria", help="Собрать набор на 85 субъектов из сохранённой таблицы РИА")
+    preparation.add_argument("--source", required=True, type=Path, help="HTML-страница сводной таблицы")
+    preparation.add_argument("--output", required=True, type=Path)
+    preparation.set_defaults(action=_prepare_ria)
     commands.add_parser("migrate", help="Развернуть схему PostgreSQL").set_defaults(action=_database)
     importer = commands.add_parser("import", help="Загрузить JSON-набор в PostgreSQL")
     importer.add_argument("--dataset", required=True, type=Path)

@@ -7,7 +7,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from .ai import summarize
 from .brief import report_facts
-from .comparison import compare
+from .comparison import compare, latest_comparable_baseline
 from .dataset import InputError
 from .postgres import RatingMissing, StoreError
 
@@ -17,6 +17,7 @@ STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/favicon.ico": ("favicon.ico", "image/vnd.microsoft.icon"),
 }
 
 
@@ -28,6 +29,19 @@ def _snapshot(snapshot):
         "population_size": snapshot.population_size,
         "methodology_version": snapshot.methodology_version,
         "source": {**asdict(snapshot.source), "published_on": snapshot.source.published_on.isoformat()},
+    }
+
+
+def _rating_json(rating):
+    periods = sorted(rating.snapshots, reverse=True)
+    return {
+        "rating_id": rating.rating_id, "rating_title": rating.title, "data_kind": rating.data_kind,
+        "periods": periods,
+        "default_baseline": latest_comparable_baseline(rating, periods[0]) if periods else None,
+        "leaders": {period: [subject for subject, row in sorted(snapshot.rows.items())
+                             if row.rank is not None and row.rank <= 3]
+                    for period, snapshot in rating.snapshots.items()},
+        "subjects": [{"subject_id": key, "name": name} for key, name in sorted(rating.subjects.items())],
     }
 
 
@@ -121,12 +135,7 @@ def make_server(store, rating_id, port=8000, provider=None):
                     filename, media = STATIC[path]
                     return self._send(200, (WEB / filename).read_bytes(), media)
                 if method == "GET" and path == "/api/v1/rating":
-                    rating = store.load(rating_id)
-                    return self._json(200, {
-                        "rating_id": rating.rating_id, "rating_title": rating.title, "data_kind": rating.data_kind,
-                        "periods": sorted(rating.snapshots, reverse=True),
-                        "subjects": [{"subject_id": key, "name": name} for key, name in sorted(rating.subjects.items())],
-                    })
+                    return self._json(200, _rating_json(store.load(rating_id)))
                 if method == "GET" and path == "/api/v1/comparisons":
                     return self._comparison(_query_params(requested.query))
                 if method == "POST" and path == "/api/v1/briefs":

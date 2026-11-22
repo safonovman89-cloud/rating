@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>И16 · Сравнение субъектов по рейтингу</title>
+  <link rel="icon" href="/favicon.ico">
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
 </head>
@@ -11,14 +12,30 @@
   <header class="hero">
     <div class="wrap">
       <p class="kicker">И16 · Аналитическая справка <span id="demo-label" hidden>Демонстрационные данные</span></p>
-      <h1>Сравнение субъектов<br>по рейтингу</h1>
+      <h1>Сравнение субъектов <br>по рейтингу</h1>
       <p id="rating-title" class="rating-title"></p>
     </div>
   </header>
   <main class="wrap">
+    <section id="executive" aria-labelledby="executive-title" hidden>
+      <div class="executive-head">
+        <div>
+          <h2 id="executive-title"></h2>
+          <p id="executive-source" class="note"></p>
+        </div>
+        <div class="executive-actions">
+          <button id="executive-print-button" type="button">Справка на 1 страницу</button>
+          <a id="executive-details" href="#report">Подробное сравнение</a>
+        </div>
+      </div>
+      <div role="status"><p id="executive-stale" class="stale-report" hidden>Параметры изменились. Нажмите «Сравнить».</p></div>
+      <div id="executive-metrics" class="executive-metrics"></div>
+      <div id="executive-checks"></div>
+    </section>
     <form id="comparison-form">
       <fieldset id="settings" disabled>
         <legend>Параметры сравнения</legend>
+        <div id="presets" class="presets" role="group" aria-label="Готовые группы" hidden></div>
         <div class="periods">
           <label>Текущий период<select id="period" required></select></label>
           <label>Базовый период<select id="baseline"></select></label>
@@ -26,7 +43,12 @@
         </div>
         <fieldset class="subjects">
           <legend>Субъекты · выберите минимум два</legend>
+          <div class="subject-tools">
+            <label>Поиск по названию<input id="subject-search" type="search" aria-controls="subjects"></label>
+            <span id="subject-count" role="status"></span>
+          </div>
           <div id="subjects" class="choices"></div>
+          <p id="subjects-empty" class="note" role="status" hidden>Субъекты не найдены.</p>
         </fieldset>
         <div class="actions">
           <button type="submit" value="template">Сравнить</button>
@@ -36,7 +58,9 @@
     </form>
     <p id="status" role="status"></p>
     <button id="retry" type="button" class="secondary" hidden>Загрузить справочник</button>
+    <div role="status"><p id="stale-report" class="stale-report" hidden>Параметры изменились. Нажмите «Сравнить».</p></div>
     <article id="report" hidden></article>
   </main>
+  <article id="executive-print"></article>
 </body>
 </html>

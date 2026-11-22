@@ -85,6 +85,12 @@ def _comparability(current, baseline, limits):
     return True, True
 
 
+def latest_comparable_baseline(dataset, period):
+    current = dataset.snapshots[period]
+    return next((earlier for earlier in sorted(dataset.snapshots, reverse=True)
+                 if earlier < period and _comparability(current, dataset.snapshots[earlier], [])[1]), None)
+
+
 def _pairwise(rows, focus_subject_id, scores_comparable):
     if focus_subject_id is None:
         return []
