@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "data_kind": "production",
+  "rating_id": "ria-social-economic-regions",
+  "rating_title": "РИА Рейтинг: социально-экономическое положение регионов",
+  "subjects": [
+    {"subject_id": "yanao", "name": "Ямало-Ненецкий автономный округ"},
+    {"subject_id": "khmao-yugra", "name": "Ханты-Мансийский автономный округ — Югра"},
+    {"subject_id": "tyumen-oblast", "name": "Тюменская область"},
+    {"subject_id": "sverdlovsk-oblast", "name": "Свердловская область"}
+  ],
+  "snapshots": [
+    {
+      "period": "2025",
+      "methodology_version": "ria-sep-public-2024-2025",
+      "score_min": 1,
+      "score_max": 100,
+      "cohort_id": "ria-ranked-85-2024-2025",
+      "population_size": 85,
+      "source": {
+        "title": "РИА Рейтинг — итоги 2025 года",
+        "reference": "https://riarating.ru/regions/20260615/630297929.html",
+        "published_on": "2026-06-15",
+        "data_reference": "https://rfimage.ru/regional-ratings"
+      },
+      "rows": [
+        {"subject_id": "yanao", "rank": 10, "score": 68.78},
+        {"subject_id": "khmao-yugra", "rank": 6, "score": 76.80},
+        {"subject_id": "tyumen-oblast", "rank": 17, "score": 62.24},
+        {"subject_id": "sverdlovsk-oblast", "rank": 5, "score": 77.77}
+      ]
+    },
+    {
+      "period": "2024",
+      "methodology_version": "ria-sep-public-2024-2025",
+      "score_min": 1,
+      "score_max": 100,
+      "cohort_id": "ria-ranked-85-2024-2025",
+      "population_size": 85,
+      "source": {
+        "title": "РИА Рейтинг — итоги 2024 года",
+        "reference": "https://riarating.ru/regions/20250623/630282313.html",
+        "published_on": "2025-06-23",
+        "data_reference": "https://rfimage.ru/regional-ratings"
+      },
+      "rows": [
+        {"subject_id": "yanao", "rank": 9, "score": 73.14},
+        {"subject_id": "khmao-yugra", "rank": 5, "score": 80.07},
+        {"subject_id": "tyumen-oblast", "rank": 15, "score": 67.82},
+        {"subject_id": "sverdlovsk-oblast", "rank": 6, "score": 79.41}
+      ]
+    }
+  ]
+}

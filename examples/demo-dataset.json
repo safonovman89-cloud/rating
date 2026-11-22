@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "data_kind": "demo",
+  "rating_id": "demo-rating",
+  "rating_title": "Демонстрационный рейтинг И16",
+  "subjects": [
+    {"subject_id": "demo-a", "name": "Субъект А"},
+    {"subject_id": "demo-b", "name": "Субъект Б"},
+    {"subject_id": "demo-c", "name": "Субъект В"},
+    {"subject_id": "demo-d", "name": "Субъект Г"}
+  ],
+  "snapshots": [
+    {
+      "period": "2025",
+      "methodology_version": "demo-v1",
+      "score_min": 0,
+      "score_max": 100,
+      "cohort_id": "demo-cohort-v1",
+      "population_size": 4,
+      "source": {
+        "title": "Демонстрационный срез за 2025 год",
+        "reference": "examples/demo-dataset.json",
+        "published_on": "2026-01-15"
+      },
+      "rows": [
+        {"subject_id": "demo-c", "rank": 4, "score": 78},
+        {"subject_id": "demo-d", "rank": 1, "score": 89},
+        {"subject_id": "demo-b", "rank": 2, "score": 82.5},
+        {"subject_id": "demo-a", "rank": 2, "score": 82.5}
+      ]
+    },
+    {
+      "period": "2024",
+      "methodology_version": "demo-v1",
+      "score_min": 0,
+      "score_max": 100,
+      "cohort_id": "demo-cohort-v1",
+      "population_size": 4,
+      "source": {
+        "title": "Демонстрационный срез за 2024 год",
+        "reference": "examples/demo-dataset.json",
+        "published_on": "2025-01-15"
+      },
+      "rows": [
+        {"subject_id": "demo-d", "rank": 1, "score": 90},
+        {"subject_id": "demo-a", "rank": 4, "score": 76},
+        {"subject_id": "demo-b", "rank": 2, "score": 84},
+        {"subject_id": "demo-c", "rank": 3, "score": 77}
+      ]
+    }
+  ]
+}

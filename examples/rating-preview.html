@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>И16 · Сравнение субъектов по рейтингу</title>
+  <style>
+    @font-face {
+      font-family: "Code Next Display";
+      src: local("Code Next ExtraBold"), local("Code Next Extra Bold"), local("CodeNext-ExtraBold");
+      font-weight: 800;
+      font-display: swap;
+    }
+
+    :root {
+      --red: #bf1238;
+      --aqua: #cfe0dc;
+      --sand: #ebe8d3;
+      --rose: #ebe4e7;
+      --mist: #e5ebe4;
+      --ink: #191719;
+      --muted: #514d52;
+      --rule: #dedbd9;
+      --display: "Code Next Display", "Arial Black", system-ui, sans-serif;
+      color: var(--ink);
+      font: 16px/1.55 system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #fff; }
+    .wrap { width: min(1120px, calc(100% - 64px)); margin-inline: auto; }
+    .hero { position: relative; isolation: isolate; overflow: hidden; background: var(--red); color: white; }
+    .hero::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0 0 0 auto;
+      width: 38%;
+      background: repeating-linear-gradient(119deg, transparent 0 24px, rgb(255 255 255 / 17%) 25px 66px, transparent 67px 78px);
+      clip-path: polygon(63% 0, 100% 0, 100% 100%, 0 100%);
+    }
+    .hero-content { padding-block: 26px 36px; }
+    .report-label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: .875rem; }
+    .demo-label { border: 1px solid currentColor; padding: 2px 8px; }
+    h1, h2, .summary-lead { font-family: var(--display); font-weight: 800; }
+    h1 { margin: 22px 0 16px; font-size: clamp(2.1rem, 6.4vw, 4.6rem); line-height: 1; letter-spacing: -.035em; }
+    .hero-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 24px; margin: 0; }
+    .hero-meta strong { font-variant-numeric: tabular-nums; }
+    main { padding-block: 32px 44px; }
+    h2 { font-size: clamp(1.35rem, 2.8vw, 1.9rem); line-height: 1.15; margin: 0 0 14px; letter-spacing: -.025em; }
+    .summary { background: var(--sand); border-inline-start: 5px solid var(--red); padding: 24px; margin-bottom: 32px; }
+    .summary h2 { color: var(--red); font-size: 1rem; letter-spacing: 0; margin-bottom: 8px; }
+    .summary-lead { font-size: clamp(1.2rem, 2.2vw, 1.55rem); line-height: 1.25; margin: 0 0 8px; }
+    .summary p:last-child { margin: 0; max-width: 75ch; }
+    .table-area { overflow-x: auto; border: 1px solid var(--rule); }
+    table { border-collapse: collapse; width: 100%; min-width: 700px; font-variant-numeric: tabular-nums; }
+    th, td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--rule); }
+    thead th { background: var(--mist); color: var(--ink); font-size: .875rem; white-space: nowrap; }
+    th[scope="colgroup"] { text-align: center; }
+    th[scope="row"], th.subject { text-align: left; }
+    tbody th[scope="row"] { font-size: 1.0625rem; white-space: nowrap; }
+    .subject-id { display: block; font-size: .8rem; font-weight: 400; color: var(--muted); }
+    .current { font-weight: 750; }
+    .group-edge { border-inline-start: 1px solid var(--rule); }
+    tbody tr:last-child > * { border-bottom: 0; }
+    .delta { display: inline-block; min-width: 3em; padding: 2px 6px; text-align: center; font-size: .875rem; font-weight: 700; }
+    .up { background: var(--aqua); }
+    .down { background: var(--rose); }
+    .zero { background: var(--mist); }
+    .note { margin: 8px 0 0; color: var(--muted); font-size: .875rem; }
+    .sources { border-top: 1px solid var(--rule); margin-top: 28px; padding-top: 18px; }
+    .sources h2 { font-size: 1.15rem; margin-bottom: 8px; }
+    .sources ul { margin: 0; padding-inline-start: 1.2em; }
+    .sources li + li { margin-top: 4px; }
+    a { color: var(--red); text-underline-offset: .15em; }
+    :focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+    @media (max-width: 560px) {
+      .wrap { width: calc(100% - 32px); }
+      .hero-content { padding-block: 18px 24px; }
+      .hero::before { width: 48%; opacity: .72; }
+      main { padding-block: 20px 28px; }
+      .summary { padding: 16px; margin-bottom: 22px; }
+      .hero-meta > span { flex-basis: 100%; }
+    }
+
+    @media print {
+      @page { margin: 13mm; }
+      .wrap { width: 100%; }
+      .hero { color: var(--ink); background: white; border-bottom: 2pt solid var(--red); }
+      .hero::before { display: none; }
+      .hero-content, main { padding-block: 12pt; }
+      h1 { font-size: 27pt; }
+      .summary { margin-bottom: 15pt; }
+      .table-area { overflow: visible; }
+      table { min-width: 0; font-size: 9pt; }
+      th, td { padding: 4pt 5pt; }
+      tr { break-inside: avoid; }
+      h2 { break-after: avoid; }
+      .summary, .sources { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-content">
+      <div class="report-label">
+        <span>И16 · Аналитическая справка</span>
+        <span class="demo-label">Демонстрационные данные</span>
+      </div>
+      <h1>Сравнение субъектов<br>по рейтингу</h1>
+      <p class="hero-meta">
+        <span>Текущий период <strong>2025</strong> · Базовый <strong>2024</strong></span>
+        <span>Сравниваются <strong>3 из 4</strong> субъектов</span>
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">Краткий итог</h2>
+      <p class="summary-lead">Среди выбранных субъектов лидируют А и Б. Оба заняли 2-е место с 82,50 балла.</p>
+      <p>Разброс в выбранной группе — <strong>4,50 балла</strong>. Субъект А поднялся с 4-го на 2-е место (+6,50 балла), а субъект В опустился с 3-го на 4-е при росте балла на 1,00.</p>
+    </section>
+
+    <section aria-labelledby="comparison-title">
+      <h2 id="comparison-title">Демонстрационный рейтинг И16</h2>
+      <div class="table-area" role="region" aria-labelledby="comparison-title" tabindex="0">
+        <table aria-labelledby="comparison-title" aria-describedby="comparison-note">
+          <colgroup span="1"></colgroup>
+          <colgroup span="2"></colgroup>
+          <colgroup span="2"></colgroup>
+          <colgroup span="2"></colgroup>
+          <thead>
+            <tr>
+              <th class="subject" scope="col" rowspan="2">Субъект</th>
+              <th class="group-edge" scope="colgroup" colspan="2">2025</th>
+              <th class="group-edge" scope="colgroup" colspan="2">2024 · база</th>
+              <th class="group-edge" scope="colgroup" colspan="2">Изменение</th>
+            </tr>
+            <tr>
+              <th class="group-edge" scope="col">Место</th><th scope="col">Баллы</th>
+              <th class="group-edge" scope="col">Место</th><th scope="col">Баллы</th>
+              <th class="group-edge" scope="col">Место</th><th scope="col">Баллы</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Субъект А<span class="subject-id">demo-a</span></th>
+              <td class="current group-edge">2</td><td class="current">82,50</td>
+              <td class="group-edge">4</td><td>76,00</td>
+              <td class="group-edge"><span class="delta up">+2</span></td><td><span class="delta up">+6,50</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Субъект Б<span class="subject-id">demo-b</span></th>
+              <td class="current group-edge">2</td><td class="current">82,50</td>
+              <td class="group-edge">2</td><td>84,00</td>
+              <td class="group-edge"><span class="delta zero">0</span></td><td><span class="delta down">−1,50</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Субъект В<span class="subject-id">demo-c</span></th>
+              <td class="current group-edge">4</td><td class="current">78,00</td>
+              <td class="group-edge">3</td><td>77,00</td>
+              <td class="group-edge"><span class="delta down">−1</span></td><td><span class="delta up">+1,00</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" id="comparison-note">Плюс в столбце изменения места означает улучшение позиции.</p>
+    </section>
+
+    <section class="sources" aria-labelledby="sources-title">
+      <h2 id="sources-title">Источники</h2>
+      <ul>
+        <li><a href="demo-dataset.json">Демонстрационный срез за 2025 год</a> · 15.01.2026 · методика <code>demo-v1</code></li>
+        <li><a href="demo-dataset.json">Демонстрационный срез за 2024 год</a> · 15.01.2025 · методика <code>demo-v1</code></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
