@@ -17,6 +17,7 @@ WEB = Path(__file__).with_name("web")
 STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
+    "/theme.js": ("theme.js", "text/javascript; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/russia-map.js": ("russia-map.js", "text/javascript; charset=utf-8"),
     "/russia-regions.json": ("russia-regions.json", "application/json; charset=utf-8"),

@@ -524,6 +524,7 @@ test('A37 · регистрация по email, кабинет аналитик�
 
   await page.goto(urls.auth + '/workspace/');
   assert.ok(page.url().endsWith('/login/'));
+  await page.getByRole('combobox', {name: 'Тема', exact: true}).selectOption('aurora');
   await page.getByLabel('Email', {exact: true}).fill('Analyst@example.test');
   await page.getByRole('button', {name: 'Получить ссылку'}).click();
   await page.getByRole('status').filter({hasText: 'Проверьте почту'}).waitFor();
@@ -539,6 +540,8 @@ test('A37 · регистрация по email, кабинет аналитик�
   await page.getByRole('button', {name: 'Подтвердить вход'}).click();
   await page.waitForURL('**/workspace/');
   await page.locator('#workspace-email').filter({hasText: email}).waitFor();
+  assert.equal(await page.getByRole('combobox', {name: 'Тема', exact: true}).inputValue(), 'aurora');
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'aurora');
   await page.getByRole('button', {name: 'Помощник', exact: true}).click();
   const help = page.getByRole('dialog', {name: 'Помощник по сервису'});
   await help.getByLabel('Что хотите узнать?').fill('Что делает эта панель?');
@@ -638,6 +641,65 @@ test('A39 · ответ модели помощника и резервная п
   await answer.filter({hasText: 'Ответ из справочника'}).waitFor();
   assert.match(await answer.innerText(), /Карта рейтинга РИА показывает/);
   assert.doesNotMatch(await answer.innerText(), /Тест отклонения/);
+});
+
+test('A40 · темы, сохранение выбора, карта и печать', async () => {
+  const context = await browser.newContext({httpCredentials: adminCredentials, colorScheme: 'dark',
+    viewport: {width: 375, height: 812}});
+  try {
+    const page = await context.newPage();
+    const picker = page.getByRole('combobox', {name: 'Тема', exact: true});
+    const root = page.locator('html');
+    const background = () => page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor);
+    await ready(page, urls.admin);
+    await picker.waitFor();
+    assert.equal(await picker.inputValue(), 'system');
+    assert.equal(await root.getAttribute('data-theme'), 'dark');
+    const darkBackground = await background();
+    const path = page.locator('#map-shapes [data-region="yanao"]');
+    const swatch = page.locator('#map-legend li').filter({hasText: 'От 50 до 75'}).locator('.map-swatch');
+    await swatch.waitFor();
+    const fill = () => path.evaluate(el => getComputedStyle(el).fill);
+    const darkFill = await fill();
+    assert.equal(darkFill, await swatch.evaluate(el => getComputedStyle(el).backgroundColor));
+
+    await picker.selectOption('light');
+    assert.equal(await background(), 'rgb(255, 255, 255)');
+    assert.notEqual(await fill(), darkFill);
+    await picker.selectOption({label: 'Северное сияние'});
+    assert.notEqual(await background(), darkBackground);
+    assert.match(await page.locator('.hero').evaluate(el => getComputedStyle(el).backgroundImage), /radial-gradient/);
+    assert.equal(await fill(), await swatch.evaluate(el => getComputedStyle(el).backgroundColor));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 375);
+    await page.reload();
+    await picker.waitFor();
+    assert.equal(await picker.inputValue(), 'aurora');
+
+    await page.getByRole('button', {name: 'Помощник', exact: true}).click();
+    const helper = page.getByRole('dialog', {name: 'Помощник по сервису'});
+    assert.notEqual(await helper.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(255, 255, 255)');
+    await page.keyboard.press('Escape');
+    await page.emulateMedia({media: 'print'});
+    assert.equal(await background(), 'rgb(255, 255, 255)');
+    assert.equal(await root.evaluate(el => getComputedStyle(el).colorScheme), 'light');
+    assert.equal(await picker.isVisible(), false);
+
+    await page.emulateMedia({media: 'screen', colorScheme: 'light'});
+    await page.goto(urls.admin + '/admin/');
+    await picker.waitFor();
+    assert.equal(await picker.inputValue(), 'aurora');
+    await page.goto(urls.admin + '/login/');
+    await picker.waitFor();
+    assert.equal(await picker.inputValue(), 'aurora');
+    await picker.selectOption('dark');
+    assert.equal(await background(), darkBackground);
+    await picker.selectOption('system');
+    assert.equal(await root.getAttribute('data-theme'), 'light');
+    await page.emulateMedia({colorScheme: 'dark'});
+    await page.locator('html[data-theme="dark"]').waitFor();
+  } finally {
+    await context.close();
+  }
 });
 
 if (urls.liveHelp) {

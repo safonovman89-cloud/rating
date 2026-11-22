@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>И16 · Рабочая область аналитика</title>
   <link rel="icon" href="/favicon.ico">
+  <script src="/theme.js"></script>
   <link rel="stylesheet" href="/styles.css">
   <script src="/workspace.js" defer></script>
   <script src="/help.js" defer></script>
@@ -14,7 +15,10 @@
     <div class="wrap">
       <div class="hero-nav">
         <p class="kicker">И16</p>
-        <button type="button" class="help-open" data-help-page="workspace">Помощник</button>
+        <div class="hero-actions">
+          <button type="button" class="help-open" data-help-page="workspace">Помощник</button>
+          <label class="theme-setting" hidden>Тема <select id="theme"></select></label>
+        </div>
       </div>
       <h1>Рабочая область аналитика</h1>
     </div>

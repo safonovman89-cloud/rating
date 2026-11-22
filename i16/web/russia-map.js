@@ -1,24 +1,24 @@
 const svgNamespace = 'http://www.w3.org/2000/svg';
-const noData = {label: 'Нет данных', color: '#e4e7e6'};
+const noData = {label: 'Нет данных', color: 'var(--map-no-data)'};
 const deltaScale = [
-  {label: 'Снижение на 5 и более', color: '#a32948', matches: value => value <= -5},
-  {label: 'Снижение менее чем на 5', color: '#e6aebb', matches: value => value < 0},
-  {label: 'Без изменений', color: '#ece8d5', matches: value => value === 0},
-  {label: 'Рост менее чем на 5', color: '#acd1c6', matches: value => value < 5},
-  {label: 'Рост на 5 и более', color: '#246f60', matches: () => true},
+  {label: 'Снижение на 5 и более', color: 'var(--map-drop-large)', matches: value => value <= -5},
+  {label: 'Снижение менее чем на 5', color: 'var(--map-drop-small)', matches: value => value < 0},
+  {label: 'Без изменений', color: 'var(--map-stable)', matches: value => value === 0},
+  {label: 'Рост менее чем на 5', color: 'var(--map-rise-small)', matches: value => value < 5},
+  {label: 'Рост на 5 и более', color: 'var(--map-rise-large)', matches: () => true},
 ];
 const indicators = {
   score: {label: 'Балл', scale: [
-    {label: 'Менее 25', color: '#efe1e7', matches: value => value < 25},
-    {label: 'От 25 до 50', color: '#dfacba', matches: value => value < 50},
-    {label: 'От 50 до 75', color: '#bd5471', matches: value => value < 75},
-    {label: '75 и выше', color: '#891535', matches: () => true},
+    {label: 'Менее 25', color: 'var(--map-score-1)', matches: value => value < 25},
+    {label: 'От 25 до 50', color: 'var(--map-score-2)', matches: value => value < 50},
+    {label: 'От 50 до 75', color: 'var(--map-score-3)', matches: value => value < 75},
+    {label: '75 и выше', color: 'var(--map-score-4)', matches: () => true},
   ]},
   rank: {label: 'Место', scale: [
-    {label: '1–10', color: '#205f52', matches: value => value <= 10},
-    {label: '11–30', color: '#4e8f81', matches: value => value <= 30},
-    {label: '31–60', color: '#8cbdb0', matches: value => value <= 60},
-    {label: '61 и ниже', color: '#cfe0dc', matches: () => true},
+    {label: '1–10', color: 'var(--map-rank-1)', matches: value => value <= 10},
+    {label: '11–30', color: 'var(--map-rank-2)', matches: value => value <= 30},
+    {label: '31–60', color: 'var(--map-rank-3)', matches: value => value <= 60},
+    {label: '61 и ниже', color: 'var(--map-rank-4)', matches: () => true},
   ]},
   rank_delta: {label: 'Изменение места', scale: deltaScale, signed: true},
   score_delta: {label: 'Изменение балла', scale: deltaScale, signed: true},
@@ -105,7 +105,7 @@ export function createRegionMap({request, element, sourceLink, valueText, addSub
     for (const [id, path] of paths) {
       const value = comparable.get(id)?.[key];
       const category = value == null ? noData : scale.find(bin => bin.matches(Number(value)));
-      path.setAttribute('fill', category.color);
+      path.style.fill = category.color;
       path.dataset.value = valueText(value ?? null, signed);
       path.firstChild.textContent = `${geometry.regions[id].name} · ${label} · ${value == null ? noData.label : path.dataset.value}`;
       path.classList.toggle('compared', selected.has(id));
