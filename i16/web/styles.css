@@ -167,6 +167,13 @@ main { padding-block: 28px 48px; }
 .hero-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; }
 .hero-nav a { color: inherit; font-size: .875rem; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+#feedback-dialog { width: min(calc(100% - 32px), 460px); padding: 18px; color: var(--ink); background: var(--field); border: 1px solid var(--line); }
+#feedback-dialog::backdrop { background: rgb(0 0 0 / .55); }
+#feedback-form label { display: grid; gap: 5px; margin-block: 12px; }
+#feedback-form :is(textarea, input) { width: 100%; padding: 8px; color: var(--ink); background: var(--field); font: inherit; border: 1px solid var(--field-line); }
+#feedback-form textarea { resize: vertical; }
+.admin-inbox-link { margin-inline-start: 16px; }
+.inbox-message { white-space: pre-wrap; overflow-wrap: anywhere; }
 .hero .help-open { background: transparent; border: 1px solid currentColor; color: white; padding: 4px 10px; font-size: .875rem; }
 .theme-setting { display: inline-flex; gap: 6px; align-items: center; font-size: .875rem; }
 .hero .theme-setting select { width: auto; max-width: 100%; padding: 4px 6px; color: white; background: var(--hero); border: 1px solid currentColor; }
@@ -285,6 +292,8 @@ thead th { background: var(--mist); font-size: .875rem; white-space: nowrap; }
 th:first-child { text-align: left; }
 tbody tr:last-child > * { border-bottom: 0; }
 .subject-id { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; }
+#public-indicators thead th { min-width: 9rem; white-space: normal; }
+#public-indicators .table-area + ul { margin-block-start: 8px; }
 .delta { display: inline-block; padding: 1px 6px; font-weight: 700; }
 .up { background: var(--aqua); }
 .down { background: var(--rose); }

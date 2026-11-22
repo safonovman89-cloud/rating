@@ -25,6 +25,7 @@
   </header>
   <main class="wrap">
     <a href="/">Вернуться к рейтингу</a>
+    <a class="admin-inbox-link" href="#admin-inbox">Обратная связь</a>
     <section class="admin-panel" aria-labelledby="admin-refresh-title">
       <h2 id="admin-refresh-title">Обновление рейтинга РИА</h2>
       <dl class="admin-status">
@@ -81,6 +82,12 @@
           </table>
         </div>
       </div>
+    </section>
+    <section class="admin-analytics" id="admin-inbox" aria-labelledby="admin-inbox-title">
+      <h2 id="admin-inbox-title">Обратная связь</h2>
+      <button type="button" class="secondary" id="admin-inbox-refresh">Обновить входящие</button>
+      <p id="admin-inbox-status" role="status"></p>
+      <ol id="admin-inbox-messages"></ol>
     </section>
   </main>
 </body>

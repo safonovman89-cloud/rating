@@ -111,6 +111,33 @@ async function request(url, options) {
   return body;
 }
 
+async function loadInbox() {
+  const refresh = document.querySelector('#admin-inbox-refresh');
+  const notice = document.querySelector('#admin-inbox-status');
+  const list = document.querySelector('#admin-inbox-messages');
+  refresh.disabled = true;
+  notice.textContent = 'Загружаем сообщения…';
+  try {
+    const {messages} = await request('/admin/api/v1/feedback');
+    list.replaceChildren(...messages.map(message => {
+      const item = document.createElement('li');
+      const details = document.createElement('p');
+      details.className = 'note';
+      details.textContent = `${date.format(new Date(message.received_at))} · ${message.email ?? 'Без email'}`;
+      const content = document.createElement('p');
+      content.className = 'inbox-message';
+      content.textContent = message.message;
+      item.append(details, content);
+      return item;
+    }));
+    notice.textContent = messages.length ? 'Последние отправленные сообщения' : 'Сообщений пока нет.';
+  } catch (error) {
+    notice.textContent = `Не удалось загрузить сообщения. ${error.message}`;
+  } finally {
+    refresh.disabled = false;
+  }
+}
+
 async function status() {
   try {
     const data = await request('/api/v1/refresh');
@@ -173,4 +200,6 @@ importForm.addEventListener('submit', async event => {
 
 loadAnalytics();
 loadSources();
+document.querySelector('#admin-inbox-refresh').addEventListener('click', loadInbox);
+loadInbox();
 status();

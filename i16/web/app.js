@@ -48,7 +48,7 @@ function message(text, error = false) {
 }
 
 async function request(url, options) {
-  if (ratingId !== null && url.startsWith('/api/v1/') && url !== '/api/v1/refresh') {
+  if (ratingId !== null && url.startsWith('/api/v1/') && !['/api/v1/refresh', '/api/v1/feedback'].includes(url)) {
     const selectedUrl = new URL(url, location.origin);
     selectedUrl.searchParams.set('rating_id', ratingId);
     url = selectedUrl;
@@ -63,6 +63,32 @@ async function request(url, options) {
   if (!response.ok) throw new Error(result.error?.message || 'Запрос не выполнен.');
   return result;
 }
+
+const feedbackDialog = document.querySelector('#feedback-dialog');
+const feedbackForm = document.querySelector('#feedback-form');
+const feedbackStatus = document.querySelector('#feedback-status');
+document.querySelector('#feedback-open').addEventListener('click', () => {
+  feedbackStatus.textContent = '';
+  feedbackDialog.showModal();
+});
+document.querySelector('#feedback-close').addEventListener('click', () => feedbackDialog.close());
+feedbackForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const body = Object.fromEntries(new FormData(feedbackForm));
+  for (const control of feedbackForm.elements) control.disabled = true;
+  feedbackStatus.textContent = 'Отправляем сообщение…';
+  try {
+    await request('/api/v1/feedback', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+    });
+    feedbackForm.reset();
+    feedbackStatus.textContent = 'Сообщение отправлено разработчику.';
+  } catch (error) {
+    feedbackStatus.textContent = error.message;
+  } finally {
+    for (const control of feedbackForm.elements) control.disabled = false;
+  }
+});
 
 function selected() {
   return [...subjects.querySelectorAll('input:checked')].map(input => input.value);
@@ -231,6 +257,7 @@ function sourceLink(label, reference) {
 
 function reportSources(result) {
   const section = element('section');
+  section.className = 'rating-sources';
   const list = element('ul');
   for (const snapshot of [result.current, result.baseline].filter(Boolean)) {
     const source = snapshot.source;
@@ -241,6 +268,78 @@ function reportSources(result) {
     list.append(item);
   }
   section.append(element('h2', 'Источники'), list);
+  return section;
+}
+
+function publicIndicators(result) {
+  const {series, coverage} = result.public_indicators;
+  const section = element('section');
+  section.id = 'public-indicators';
+  section.append(element('h2', 'Дополнительные показатели регионов'));
+  for (const [group, title] of [['statistics', 'Рождаемость и цены на топливо'], ['ai', 'Искусственный интеллект']]) {
+    const columns = series.filter(item => item.group === group);
+    if (!columns.length) continue;
+    const labels = ['Субъект', ...columns.map(item => `${item.label} · ${item.period} · ${item.unit}`)];
+    const rows = result.rows.map(row => ({...row,
+      fields: columns.map(item => [item.values[row.subject_id] ?? null, false]),
+    }));
+    const groupSection = table(title, labels, rows, `public-indicators-${group}`);
+    const sources = element('ul', undefined, 'note');
+    const groupedSources = new Map();
+    for (const item of columns) {
+      const key = `${item.reference} ${item.note}`;
+      if (!groupedSources.has(key)) groupedSources.set(key, item);
+    }
+    for (const item of groupedSources.values()) {
+      const source = element('li');
+      source.append(`${item.note} `, sourceLink(item.source, item.reference));
+      sources.append(source);
+    }
+    groupSection.append(sources);
+    section.append(groupSection);
+  }
+  if (series.some(item => item.id === 'ai-activity-rank' || item.id === 'ai-adoption-rank')) {
+    const rankings = element('details', undefined, 'executive-checks');
+    const panels = element('div');
+    const open = element('summary', 'Показать рейтинг ИИ по всем регионам');
+    rankings.append(open, panels);
+    open.addEventListener('click', async () => {
+      if (rankings.open || panels.childElementCount) return;
+      panels.append(element('p', 'Загружаем рейтинг…', 'note'));
+      try {
+        const data = await request('/api/v1/ai-ranking');
+        panels.replaceChildren(...data.rankings.map((item, index) => {
+          const labels = ['Субъект', `Место · ${item.unit}`];
+          if (item.value_label) labels.push(item.value_label);
+          const rows = item.rows.map(row => ({...row, fields: [
+            [row.rank, false], ...(item.value_label ? [[row.value, false]] : []),
+          ]}));
+          const ranking = table(`${item.label} · ${item.period}`, labels, rows, `ai-ranking-${index}`);
+          const note = element('p', `${item.note} `, 'note');
+          note.append(sourceLink(item.source, item.reference));
+          ranking.append(note);
+          return ranking;
+        }));
+      } catch (error) {
+        panels.replaceChildren();
+        panels.textContent = `${error.message} Закройте и откройте рейтинг, чтобы повторить.`;
+      }
+    });
+    section.append(rankings);
+  }
+  if (!series.length) section.append(element('p', 'Дополнительная статистика пока не загружена.', 'note'));
+  const coverageNote = element('p', 'Операторы показывают расчётные зоны сигнала. Сопоставимая доля населения с покрытием по регионам в И16 отсутствует. ', 'note');
+  coverageNote.append(sourceLink('Карта Т2 с выбором региона', coverage.directory));
+  const maps = element('ul');
+  for (const row of result.rows) {
+    const map = coverage.maps[row.subject_id];
+    if (!map) continue;
+    const item = element('li');
+    item.append(`${row.name} · `, sourceLink(`Карта ${map.operator}`, map.reference));
+    maps.append(item);
+  }
+  section.append(element('h3', 'Покрытие сотовой связи'), coverageNote);
+  if (maps.childElementCount) section.append(maps);
   return section;
 }
 
@@ -517,6 +616,7 @@ function render(result) {
     limits.append(element('h2', 'Ограничения сравнения'), list);
     output.append(limits);
   }
+  if (result.public_indicators) output.append(publicIndicators(result));
   output.append(reportSources(result));
   const photo = result.data_kind === 'production' ? regionPhoto(executiveSelection(result).subject) : Promise.resolve(null);
   photo.then(figure => { if (figure) context.after(figure); });

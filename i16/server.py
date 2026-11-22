@@ -10,6 +10,8 @@ from .dataset import InputError, parse_dataset, rating_identifier
 from .email_access import SESSION_SECONDS, email_address, session_cookie, session_hash, token_hash
 from .payloads import comparison_payload, map_payload, payload_json, rating_payload
 from .postgres import RatingMissing, SourceConflict, StoreError
+from .public_indicators import ai_rankings_payload, public_indicators_payload
+from .ria import RIA_ID
 from .service_help import service_help
 
 
@@ -64,7 +66,7 @@ def _body_params(body):
 
 
 def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=None, admin=None,
-                refresh_request=None, mailer=None, auth_origin=None, help_provider=None):
+                refresh_request=None, mailer=None, auth_origin=None, help_provider=None, public_indicators=()):
     class Handler(BaseHTTPRequestHandler):
         def _send(self, status, content, media, headers=()):
             self.send_response(status)
@@ -128,6 +130,11 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 if method == "GET" and path == "/api/v1/comparisons":
                     selected, params = _query_params(requested.query, comparison=True)
                     return self._comparison(selected or rating_id, params)
+                if method == "GET" and path == "/api/v1/ai-ranking":
+                    selected, _ = _query_params(requested.query)
+                    if (selected or rating_id) != RIA_ID:
+                        return self._json(200, {"rankings": []})
+                    return self._json(200, ai_rankings_payload(store.load(RIA_ID).subjects, public_indicators))
                 if method == "GET" and path == "/api/v1/map":
                     selected, (period, subjects, baseline, focus) = _query_params(requested.query, comparison=True)
                     if subjects or focus is not None:
@@ -140,6 +147,8 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                     return self._comparison(selected or rating_id, _body_params(self._read_body()), provider)
                 if method == "POST" and path == "/api/v1/help":
                     return self._json(200, service_help(self._read_body(), help_provider))
+                if method == "POST" and path == "/api/v1/feedback":
+                    return self._save_feedback()
                 return self._error(404, "not_found", "Страница не найдена.")
             except ValueError as error:
                 return self._error(400, "invalid_request", str(error))
@@ -220,6 +229,8 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 return self._send(200, (WEB / "admin.js").read_bytes(), "text/javascript; charset=utf-8")
             if method == "GET" and path == "/admin/api/v1/analytics":
                 return self._json(200, store.admin_analytics(rating_id))
+            if method == "GET" and path == "/admin/api/v1/feedback":
+                return self._json(200, {"messages": store.recent_feedback()})
             if method == "GET" and path == "/admin/example.json":
                 example = WEB.parent.parent / "examples" / "demo-dataset.json"
                 return self._send(200, example.read_bytes(), "application/json; charset=utf-8",
@@ -240,11 +251,31 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 return self._json(202, {"accepted": True})
             return self._error(404, "not_found", "Страница не найдена.")
 
+        def _save_feedback(self):
+            body = self._read_body()
+            if not isinstance(body, dict) or set(body) - {"message", "email"}:
+                raise InputError("Укажите сообщение и, при желании, email для ответа.")
+            message = body.get("message")
+            if not isinstance(message, str) or not 3 <= len(message.strip()) <= 3000:
+                raise InputError("Сообщение должно содержать от 3 до 3000 символов.")
+            try:
+                message.encode("utf-8")
+            except UnicodeEncodeError as error:
+                raise InputError("Сообщение содержит недопустимый символ.") from error
+            if "\x00" in message:
+                raise InputError("Сообщение содержит недопустимый символ.")
+            email = body.get("email")
+            store.save_feedback(message.strip(), email_address(email) if email not in (None, "") else None)
+            return self._json(201, {"accepted": True})
+
         def _comparison(self, active_rating, params, selector=None):
             period, subjects, baseline, focus = params
             rating = store.load(active_rating)
             report = compare(rating, subjects, period, baseline, focus)
-            return self._json(200, comparison_payload(report, selector))
+            payload = comparison_payload(report, selector)
+            if active_rating == RIA_ID and rating.data_kind == "production":
+                payload["public_indicators"] = public_indicators_payload(report.rows, public_indicators)
+            return self._json(200, payload)
 
         def _read_json_bytes(self, limit):
             if self.headers.get_content_type() != "application/json":

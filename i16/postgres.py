@@ -184,6 +184,23 @@ class Postgres:
         except psycopg.Error as error:
             raise StoreError(_database_message(error)) from error
 
+    def save_feedback(self, message, email):
+        try:
+            with self._connect() as conn:
+                conn.execute("INSERT INTO feedback_messages (message, email) VALUES (%s, %s)", (message, email))
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
+    def recent_feedback(self):
+        try:
+            with self._connect() as conn:
+                rows = conn.execute("""
+                    SELECT received_at, email, message FROM feedback_messages ORDER BY id DESC LIMIT 100
+                    """).fetchall()
+                return [{**row, "received_at": row["received_at"].isoformat()} for row in rows]
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+
     def load(self, identifier: str) -> Dataset:
         try:
             with self._connect() as conn:

@@ -145,7 +145,7 @@ test('A17/A18/A22/A23 · пилот РИА, графики, источники �
   assert.deepEqual(await chart(page, /Изменение балла/), ['−3,27', '−4,36']);
   assert.deepEqual(await chart(page, /Изменение места/), ['−1', '−1']);
   assert.deepEqual(await cells(page, 'Разрывы по баллам', 'khmao-yugra'), ['−8,02', '−6,93', '−1,09']);
-  assert.deepEqual(await page.locator('#report').getByRole('link').evaluateAll(items => items.map(item => item.getAttribute('href'))),
+  assert.deepEqual(await page.locator('#report .rating-sources').getByRole('link').evaluateAll(items => items.map(item => item.getAttribute('href'))),
     riaDataset.snapshots.flatMap(({source}) => [source.reference, source.data_reference]));
   assert.match(await page.locator('#report').innerText(), /2025 год[^\n]*15\.06\.2026/);
   assert.match(await page.locator('#report').innerText(), /2024 год[^\n]*23\.06\.2025/);
@@ -745,6 +745,77 @@ test('A40 · темы, сохранение выбора, карта и печа
     await page.locator('html[data-theme="dark"]').waitFor();
   } finally {
     await context.close();
+  }
+});
+
+test('A41 · независимые показатели и карты следуют за выбранными субъектами', async page => {
+  const ordinary = await (await page.request.get(urls.ria + riaQuery)).json();
+  const loaded = await (await page.request.get(urls.indicators + riaQuery)).json();
+  assert.deepEqual(loaded.rows, ordinary.rows);
+  assert.equal(ordinary.public_indicators.series.length, 0);
+  assert.deepEqual(loaded.public_indicators.series[0].values, {yanao: '0', 'khmao-yugra': null});
+  const demo = await (await page.request.get(urls.demo + demoQuery)).json();
+  assert.equal(demo.public_indicators, undefined);
+  await ready(page, urls.indicators);
+  const indicators = page.locator('#public-indicators');
+  await indicators.waitFor();
+  assert.deepEqual(await cells(page, 'Рождаемость и цены на топливо', 'yanao'), ['0']);
+  assert.deepEqual(await cells(page, 'Рождаемость и цены на топливо', 'khmao-yugra'), ['—']);
+  assert.deepEqual(await cells(page, 'Искусственный интеллект', 'yanao'), ['5']);
+  assert.equal(await indicators.getByRole('link', {name: 'Тестовый источник'}).getAttribute('href'), 'https://example.test/births');
+  assert.equal(await indicators.getByRole('link', {name: 'Карта МТС', exact: true}).count(), 2);
+  await indicators.getByText('Показать рейтинг ИИ по всем регионам', {exact: true}).click();
+  const ranking = indicators.getByRole('table', {name: 'Место по активности ИИ · 2026'});
+  await ranking.waitFor();
+  assert.deepEqual(await ranking.locator('tbody td').allTextContents(), ['2', '5']);
+  await page.locator('#baseline').selectOption('');
+  await page.locator('#period').selectOption('2024');
+  await page.getByRole('checkbox', {name: /Тюменская область/}).check();
+  await submit(page);
+  assert.deepEqual(await cells(page, 'Рождаемость и цены на топливо', 'tyumen-oblast'), ['6,5']);
+  assert.equal(await indicators.getByText('Рождаемость · 2023 · на 1 000 человек', {exact: true}).count(), 1);
+  assert.equal(await indicators.getByRole('link', {name: 'Карта Т2', exact: true}).count(), 1);
+});
+
+test('A42 · отправка обратной связи и защищённые входящие', async page => {
+  const endpoint = '/api/v1/feedback';
+  const inbox = '/admin' + endpoint;
+  const url = urls.admin;
+  const message = 'Тест обратной связи\n<em>Две строки</em>';
+  assert.equal((await page.request.get(url + inbox)).status(), 401);
+  assert.equal((await page.request.post(url + endpoint, {data: {message: '  '}})).status(), 400);
+  assert.equal((await page.request.post(url + endpoint, {data: {message, email: 'bad'}})).status(), 400);
+  await page.setViewportSize({width: 375, height: 760});
+  await ready(page, url);
+  await page.getByRole('button', {name: 'Обратная связь'}).click();
+  const dialog = page.getByRole('dialog', {name: 'Сообщение разработчику'});
+  const text = dialog.getByRole('textbox', {name: 'Сообщение', exact: true});
+  await text.fill(message);
+  await dialog.getByRole('textbox', {name: /Email для ответа/}).fill('answer@example.test');
+  const send = dialog.getByRole('button', {name: 'Отправить'});
+  await page.route(`**${endpoint}`, route => route.abort('connectionfailed'), {times: 1});
+  await send.click();
+  await dialog.getByRole('status').getByText('Сервер недоступен. Повторите запрос.').waitFor();
+  assert.equal(await text.inputValue(), message);
+  await send.click();
+  await dialog.getByRole('status').getByText('Сообщение отправлено разработчику.').waitFor();
+  assert.equal(await text.inputValue(), '');
+  const received = await page.request.get(url + inbox, {headers: {Authorization: adminHeader}});
+  const {messages} = await received.json();
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].email, 'answer@example.test');
+  assert.equal(messages[0].message, message);
+  const panel = await browser.newContext({httpCredentials: adminCredentials});
+  try {
+    const adminPage = await panel.newPage();
+    await adminPage.goto(url + '/admin/#admin-inbox');
+    const item = adminPage.locator('#admin-inbox-messages li');
+    await item.waitFor();
+    assert.match(await item.textContent(), /answer@example\.test/);
+    assert.equal(await item.locator('.inbox-message').textContent(), message);
+    assert.equal(await item.locator('em').count(), 0);
+  } finally {
+    await panel.close();
   }
 });
 

@@ -25,6 +25,7 @@ from i16.dataset import load_dataset
 from i16.postgres import Postgres
 from i16.refresh import RiaRefresh, run_ria_check
 from i16.server import make_server
+from i16.public_indicators import load_public_indicators
 from i16.service_help import configured_help_provider
 
 
@@ -294,6 +295,18 @@ def main():
             if live:
                 configurations["live"] = (RIA_ID, live)
             urls = {key: stack.enter_context(server(connection, *args)) for key, args in configurations.items()}
+            public_path = Path(scratch) / "public-indicators.json"
+            public_path.write_text(json.dumps({"schema_version": 1, "series": [
+                {"id": "birth-demo", "group": "statistics", "label": "Рождаемость", "period": "2023",
+                 "unit": "на 1 000 человек", "source": "Тестовый источник", "note": "Демонстрационный ряд.",
+                 "reference": "https://example.test/births", "values": {"yanao": "0", "tyumen-oblast": "6.5"}},
+                {"id": "ai-activity-rank", "group": "ai", "label": "Место по активности ИИ", "period": "2026",
+                 "unit": "место из 85", "source": "Тестовый индекс", "note": "Демонстрационный рейтинг.",
+                 "reference": "https://example.test/ai", "values": {"yanao": "5", "khmao-yugra": "2"}},
+            ]}), encoding="utf-8")
+            urls["indicators"] = stack.enter_context(server(
+                connection, RIA_ID, public_indicators=load_public_indicators(public_path),
+            ))
             urls["help"] = stack.enter_context(server(connection, RIA_ID, help_provider=help_provider))
             if live_help:
                 urls["liveHelp"] = stack.enter_context(server(connection, RIA_ID, help_provider=live_help))

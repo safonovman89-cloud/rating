@@ -18,6 +18,7 @@
         <div class="hero-actions">
           <a href="/workspace/">Рабочая область</a>
           <button type="button" class="help-open" data-help-page="rating">Помощник</button>
+          <button type="button" class="help-open" id="feedback-open" aria-haspopup="dialog">Обратная связь</button>
           <label class="theme-setting" hidden>Тема <select id="theme"></select></label>
         </div>
       </div>
@@ -38,6 +39,7 @@
           <button id="executive-print-button" type="button">Справка на 1 страницу</button>
           <a id="executive-details" href="#report">Подробное сравнение</a>
           <a href="#regional-map">Карта регионов</a>
+          <a href="#public-indicators">Дополнительные показатели</a>
         </div>
       </div>
       <div role="status"><p id="executive-stale" class="stale-report" hidden>Параметры изменились. Нажмите «Сравнить».</p></div>
@@ -104,6 +106,18 @@
     <div role="status"><p id="stale-report" class="stale-report" hidden>Параметры изменились. Нажмите «Сравнить».</p></div>
     <article id="report" hidden></article>
   </main>
+  <dialog id="feedback-dialog" aria-labelledby="feedback-title">
+    <form id="feedback-form">
+      <h2 id="feedback-title">Сообщение разработчику</h2>
+      <label>Сообщение<textarea name="message" rows="5" minlength="3" maxlength="3000" required autofocus></textarea></label>
+      <label>Email для ответа <span class="note">(необязательно)</span><input name="email" type="email" maxlength="254" autocomplete="email"></label>
+      <div class="actions">
+        <button type="submit">Отправить</button>
+        <button type="button" class="secondary" id="feedback-close">Закрыть</button>
+      </div>
+      <p id="feedback-status" role="status"></p>
+    </form>
+  </dialog>
   <article id="executive-print"></article>
 </body>
 </html>

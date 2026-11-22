@@ -70,12 +70,15 @@ def _database(args):
             from .admin import configured_admin
             from .ai import configured_provider
             from .email_access import configured_auth_origin, configured_mailer
+            from .public_indicators import load_public_indicators
             from .refresh import RiaRefresh, run_ria_check
             from .ria import RIA_ID
             from .server import make_server
             from .service_help import configured_help_provider
 
             worker = None
+            public_path = args.public_indicators or Path(__file__).resolve().parents[1] / "build/public-region-indicators.json"
+            indicators = load_public_indicators(public_path) if args.public_indicators or public_path.is_file() else ()
             if args.refresh_ria is not None:
                 if args.rating_id != RIA_ID or not 1 <= args.refresh_ria <= 8760:
                     raise InputError("--refresh-ria применяется к рейтингу РИА с интервалом от 1 до 8760 часов")
@@ -84,7 +87,7 @@ def _database(args):
                              refresh_status=worker.status if worker else None,
                              refresh_request=worker.request_check if worker else None,
                              mailer=configured_mailer(), auth_origin=configured_auth_origin(),
-                             help_provider=configured_help_provider()) as server:
+                             help_provider=configured_help_provider(), public_indicators=indicators) as server:
                 print(f"И16 открыт по адресу http://127.0.0.1:{server.server_port}/", flush=True)
                 if worker:
                     worker.start()
@@ -122,6 +125,7 @@ def main(argv=None):
     serve = commands.add_parser("serve", help="Запустить веб-клиент и HTTP API на 127.0.0.1")
     serve.add_argument("--rating-id", default="demo-rating")
     serve.add_argument("--port", type=int, choices=range(1, 65536), metavar="PORT", default=8000)
+    serve.add_argument("--public-indicators", type=Path, metavar="JSON", help="Файл дополнительных показателей регионов")
     serve.add_argument("--refresh-ria", type=int, nargs="?", const=24, metavar="HOURS",
                        help="Проверять таблицу РИА при запуске и периодически. По умолчанию каждые 24 часа")
     serve.set_defaults(action=_database)
