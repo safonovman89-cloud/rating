@@ -316,9 +316,12 @@ test('A29 · справка руководителя с фото региона 
   await ready(page, urls.ria);
   const button = page.getByRole('button', {name: 'Справка на 1 страницу'});
   const notice = page.locator('#executive-stale');
+  const pdfRegion = page.getByRole('combobox', {name: 'Регион для PDF'});
+  assert.equal(await pdfRegion.inputValue(), 'yanao');
   await page.locator('#baseline').selectOption('');
   await notice.waitFor({state: 'visible'});
   assert.ok(await button.isDisabled());
+  assert.ok(await pdfRegion.isDisabled());
   await page.locator('#baseline').selectOption('2024');
   await notice.waitFor({state: 'hidden'});
   assert.ok(await button.isEnabled());
@@ -361,11 +364,17 @@ test('A29 · справка руководителя с фото региона 
   await submit(page, page.getByRole('button', {name: 'ЯНАО и УрФО', exact: true}));
   await printCase('ural', 5, 'yanao');
   await submit(page, page.getByRole('button', {name: 'ЯНАО и Югра', exact: true}));
-  await page.locator('#focus').selectOption('khmao-yugra');
-  await submit(page);
+  const [switchRegion] = await Promise.all([
+    page.waitForResponse(response => response.url().includes('/api/v1/comparisons?')),
+    pdfRegion.selectOption('khmao-yugra'),
+  ]);
+  assert.equal((await switchRegion.json()).focus_subject_id, 'khmao-yugra');
+  await page.locator('#executive-title').filter({hasText: 'Югра'}).waitFor();
+  assert.equal(await page.locator('#focus').inputValue(), 'khmao-yugra');
   await printCase('yugra', 2, 'khmao-yugra');
   await page.locator('#focus').selectOption('');
   await submit(page);
+  assert.equal(await pdfRegion.inputValue(), 'khmao-yugra');
   await printCase('no-focus', 2, 'khmao-yugra', false);
   await page.route('**/region-photos/yanao.jpg', route => route.abort('connectionfailed'));
   await page.locator('#focus').selectOption('yanao');

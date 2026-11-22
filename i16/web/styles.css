@@ -154,6 +154,8 @@ main { padding-block: 28px 48px; }
 .executive-head { justify-content: space-between; margin-bottom: 12px; }
 .executive-head h2 { margin-bottom: 0; font-size: clamp(1.5rem, 4vw, 2rem); }
 .executive-actions a { font-size: .875rem; }
+.pdf-region { display: grid; gap: 3px; width: min(100%, 225px); font-size: .875rem; font-weight: 650; }
+.pdf-region select { padding: 5px 8px; }
 .admin-panel { max-width: 620px; padding: 16px 20px; margin-top: 16px; border: 1px solid var(--line); }
 .admin-status { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 12px; }
 .admin-status dd { margin: 0; font-weight: 650; }

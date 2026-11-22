@@ -18,6 +18,7 @@ const executive = document.querySelector('#executive');
 const executiveStale = document.querySelector('#executive-stale');
 const executiveDetails = document.querySelector('#executive-details');
 const printButton = document.querySelector('#executive-print-button');
+const pdfRegion = document.querySelector('#pdf-region');
 const printView = document.querySelector('#executive-print');
 const riaId = 'ria-social-economic-regions';
 const ratingId = new URLSearchParams(location.search).get('rating_id');
@@ -96,6 +97,8 @@ function updateReportNotice() {
   executiveDetails.hidden = output.hidden;
   const unavailable = settings.disabled || output.hidden || stale;
   printButton.disabled = unavailable || printing;
+  pdfRegion.disabled = printButton.disabled;
+  if (!settings.disabled && executiveReport) pdfRegion.value = executiveReport.subjectId;
   regionMap.setStale(unavailable);
 }
 
@@ -411,8 +414,10 @@ function executiveMetrics(result, subject, gap) {
 
 function renderExecutive(result, photo) {
   if (catalog.rating_id !== riaId) return;
-  executiveReport = {result, photo};
   const {subject, gap, title} = executiveSelection(result);
+  executiveReport = {result, photo, subjectId: subject.subject_id};
+  pdfRegion.replaceChildren(...result.rows.map(row => new Option(row.name, row.subject_id)));
+  pdfRegion.value = subject.subject_id;
   executive.querySelector('#executive-title').textContent = title;
   const source = result.current.source;
   const context = result.baseline ? `${result.current.period} год · база ${result.baseline.period} · ` : `${result.current.period} год · `;
@@ -596,6 +601,10 @@ form.addEventListener('change', event => {
   updateReportNotice();
 });
 subjectSearch.addEventListener('input', filterSubjects);
+pdfRegion.addEventListener('change', () => {
+  focus.value = pdfRegion.value;
+  runComparison();
+});
 printButton.addEventListener('click', printExecutive);
 window.addEventListener('afterprint', () => document.body.classList.remove('print-executive'));
 retry.addEventListener('click', load);
