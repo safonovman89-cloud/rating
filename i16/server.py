@@ -5,9 +5,9 @@ from urllib.parse import parse_qs, urlsplit
 
 from .admin import BASIC_CHALLENGE
 from .comparison import compare
-from .dataset import InputError
+from .dataset import InputError, parse_dataset, rating_identifier
 from .payloads import comparison_payload, map_payload, payload_json, rating_payload
-from .postgres import RatingMissing, StoreError
+from .postgres import RatingMissing, SourceConflict, StoreError
 
 
 WEB = Path(__file__).with_name("web")
@@ -21,17 +21,21 @@ STATIC = {
 }
 
 
-def _query_params(query):
+def _query_params(query, *, comparison=False):
     fields = parse_qs(query, keep_blank_values=True)
-    if set(fields) - {"period", "baseline", "subject", "focus_subject"}:
+    names = ("rating_id", "period", "baseline", "focus_subject") if comparison else ("rating_id",)
+    if set(fields) - set(names) - ({"subject"} if comparison else set()):
         raise InputError("Запрос содержит неизвестный параметр")
     values = {}
-    for name in ("period", "baseline", "focus_subject"):
+    for name in names:
         options = fields.get(name, [])
         if len(options) > 1:
             raise InputError(f"Параметр {name} указан несколько раз")
         values[name] = options[0] if options else None
-    return values["period"], fields.get("subject", []), values["baseline"], values["focus_subject"]
+    selected = values["rating_id"]
+    if selected is not None:
+        selected = rating_identifier(selected)
+    return selected, (values.get("period"), fields.get("subject", []), values.get("baseline"), values.get("focus_subject"))
 
 
 def _body_params(body):
@@ -96,23 +100,28 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 if method == "GET" and path == "/api/v1/refresh":
                     return self._json(200, refresh_status() if refresh_status else {"enabled": False})
                 if method == "GET" and path == "/api/v1/rating":
-                    return self._json(200, rating_payload(store.load(rating_id)))
+                    selected, _ = _query_params(requested.query)
+                    return self._json(200, rating_payload(store.load(selected or rating_id)))
                 if method == "GET" and path == "/api/v1/comparisons":
-                    return self._comparison(_query_params(requested.query))
+                    selected, params = _query_params(requested.query, comparison=True)
+                    return self._comparison(selected or rating_id, params)
                 if method == "GET" and path == "/api/v1/map":
-                    period, subjects, baseline, focus = _query_params(requested.query)
+                    selected, (period, subjects, baseline, focus) = _query_params(requested.query, comparison=True)
                     if subjects or focus is not None:
                         raise InputError("Для карты укажите текущий и, при необходимости, базовый период")
-                    rating = store.load(rating_id)
+                    rating = store.load(selected or rating_id)
                     report = compare(rating, list(rating.subjects), period, baseline)
                     return self._json(200, map_payload(report))
                 if method == "POST" and path == "/api/v1/briefs":
-                    return self._comparison(_body_params(self._read_body()), provider)
+                    selected, _ = _query_params(requested.query)
+                    return self._comparison(selected or rating_id, _body_params(self._read_body()), provider)
                 return self._error(404, "not_found", "Страница не найдена.")
             except ValueError as error:
                 return self._error(400, "invalid_request", str(error))
             except RatingMissing as error:
                 return self._error(404, "rating_not_loaded", str(error))
+            except SourceConflict as error:
+                return self._error(409, "source_conflict", str(error))
             except StoreError as error:
                 return self._error(503, "database_unavailable", str(error))
 
@@ -129,6 +138,16 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 return self._send(200, (WEB / "admin.js").read_bytes(), "text/javascript; charset=utf-8")
             if method == "GET" and path == "/admin/api/v1/analytics":
                 return self._json(200, store.admin_analytics(rating_id))
+            if method == "GET" and path == "/admin/example.json":
+                example = WEB.parent.parent / "examples" / "demo-dataset.json"
+                return self._send(200, example.read_bytes(), "application/json; charset=utf-8",
+                                  (("Content-Disposition", 'attachment; filename="demo-dataset.json"'),))
+            if method == "GET" and path == "/admin/api/v1/sources":
+                return self._json(200, {"sources": store.sources()})
+            if method == "POST" and path == "/admin/api/v1/sources":
+                dataset = parse_dataset(self._read_json_bytes(2 * 1024 * 1024))
+                store.save(dataset, append_only=True)
+                return self._json(201, {"rating_id": dataset.rating_id, "periods": sorted(dataset.snapshots)})
             if method == "POST" and path == "/admin/api/v1/refresh":
                 if query or self._read_body() != {}:
                     raise InputError("Для ручной проверки передайте пустой объект JSON без параметров URL")
@@ -139,20 +158,30 @@ def make_server(store, rating_id, port=8000, provider=None, *, refresh_status=No
                 return self._json(202, {"accepted": True})
             return self._error(404, "not_found", "Страница не найдена.")
 
-        def _comparison(self, params, selector=None):
+        def _comparison(self, active_rating, params, selector=None):
             period, subjects, baseline, focus = params
-            rating = store.load(rating_id)
+            rating = store.load(active_rating)
             report = compare(rating, subjects, period, baseline, focus)
             return self._json(200, comparison_payload(report, selector))
 
-        def _read_body(self):
+        def _read_json_bytes(self, limit):
             if self.headers.get_content_type() != "application/json":
                 raise InputError("Ожидается тело запроса application/json")
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= 64 * 1024:
+                if not 0 < length <= limit:
                     raise ValueError
-                return json.loads(self.rfile.read(length))
+                contents = self.rfile.read(length)
+                if len(contents) != length:
+                    raise ValueError
+                return contents
+            except ValueError as error:
+                raise InputError("Некорректный размер тела JSON") from error
+
+        def _read_body(self):
+            contents = self._read_json_bytes(64 * 1024)
+            try:
+                return json.loads(contents)
             except (ValueError, RecursionError) as error:
                 raise InputError("Некорректное или слишком большое тело JSON") from error
 

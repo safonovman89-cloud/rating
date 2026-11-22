@@ -79,6 +79,10 @@ def _id(value, path):
     return value
 
 
+def rating_identifier(value):
+    return _id(value, "rating_id")
+
+
 def year(value, path="Период"):
     if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}", value) or value == "0000":
         raise InputError(f"{path}: ожидается год из четырёх цифр от 0001 до 9999")
@@ -186,7 +190,7 @@ def validate_dataset(value):
     kind = _field(root, "data_kind", "Набор")
     if kind not in ("demo", "production"):
         raise InputError("data_kind: ожидается demo или production")
-    identifier = _id(_field(root, "rating_id", "Набор"), "rating_id")
+    identifier = rating_identifier(_field(root, "rating_id", "Набор"))
     title = _text(_field(root, "rating_title", "Набор"), "rating_title")
     subjects = {}
     for index, entry in enumerate(_array(_field(root, "subjects", "Набор"), "subjects", nonempty=True)):
@@ -214,12 +218,17 @@ def _reject_constant(value):
     raise InputError(f"Некорректное число JSON: {value}")
 
 
-def load_dataset(path: Path):
+def parse_dataset(contents, source="загрузке"):
     try:
-        contents = path.read_text(encoding="utf-8")
+        if isinstance(contents, bytes):
+            contents = contents.decode("utf-8")
         value = json.loads(contents, parse_float=Decimal, parse_constant=_reject_constant, object_pairs_hook=_json_object)
     except InputError:
         raise
     except (ValueError, RecursionError, ArithmeticError) as error:
-        raise InputError(f"Некорректный JSON в {path.name}: {error}") from error
+        raise InputError(f"Некорректный JSON в {source}: {error}") from error
     return validate_dataset(value)
+
+
+def load_dataset(path: Path):
+    return parse_dataset(path.read_bytes(), path.name)

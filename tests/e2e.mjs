@@ -17,6 +17,8 @@ const demoQuery = '/api/v1/comparisons?period=2025&baseline=2024&subject=demo-a&
 const riaQuery = '/api/v1/comparisons?period=2025&baseline=2024&subject=yanao&subject=khmao-yugra';
 const compare = page => page.getByRole('button', {name: 'Сравнить', exact: true});
 const ai = page => page.getByRole('button', {name: 'Справка с ИИ', exact: true});
+const adminCredentials = {username: 'test-admin', password: 'test-admin-password'};
+const adminHeader = `Basic ${Buffer.from(`${adminCredentials.username}:${adminCredentials.password}`).toString('base64')}`;
 
 async function ready(page, url) {
   await page.goto(url);
@@ -392,9 +394,8 @@ test('A31 · карта регионов, показатели и добавле
 
 test('A34 · вход администратора и защищённый ручной запуск', async page => {
   const action = urls.admin + '/admin/api/v1/refresh';
-  const credentials = {username: 'test-admin', password: 'test-admin-password'};
-  const good = `Basic ${Buffer.from(`${credentials.username}:${credentials.password}`).toString('base64')}`;
-  const wrong = `Basic ${Buffer.from(`${credentials.username}:wrong-password`).toString('base64')}`;
+  const good = adminHeader;
+  const wrong = `Basic ${Buffer.from(`${adminCredentials.username}:wrong-password`).toString('base64')}`;
   assert.equal((await page.request.get(urls.ria + '/admin/')).status(), 404);
   assert.equal((await page.request.get(urls.admin + '/api/v1/rating')).status(), 200);
   const denied = await page.request.get(urls.admin + '/admin/');
@@ -406,7 +407,7 @@ test('A34 · вход администратора и защищённый ру�
   assert.equal((await page.request.post(action, {headers: {Authorization: good, Origin: 'https://example.com'}, data: {}})).status(), 403);
   assert.equal((await page.request.post(action, {headers: {Authorization: good}, data: {unexpected: true}})).status(), 400);
 
-  const context = await browser.newContext({httpCredentials: credentials});
+  const context = await browser.newContext({httpCredentials: adminCredentials});
   try {
     const admin = await context.newPage();
     assert.equal((await admin.goto(urls.admin + '/admin')).status(), 200);
@@ -419,10 +420,96 @@ test('A34 · вход администратора и защищённый ру�
     assert.deepEqual(await accepted.json(), {accepted: true});
     assert.equal((await page.request.post(action, {headers: {Authorization: good}, data: {}})).status(), 409);
     await admin.getByText('Проверка запрошена.', {exact: true}).waitFor();
-    await admin.getByText('Изменений нет', {exact: true}).waitFor();
+    await admin.locator('#admin-state').filter({hasText: 'Изменений нет'}).waitFor();
+    await admin.locator('#admin-history-table tbody tr').filter({hasText: 'Из панели'}).waitFor();
   } finally {
     await context.close();
   }
+});
+
+test('A35 · покрытие выпусков и сохранённая история проверок', async page => {
+  const endpoint = '/admin/api/v1/analytics';
+  assert.equal((await page.request.get(urls.admin + endpoint)).status(), 401);
+  const headers = {Authorization: adminHeader};
+  const complete = await page.request.get(urls.admin + endpoint, {headers});
+  assert.equal(complete.status(), 200);
+  const result = await complete.json();
+  const count = riaDataset.subjects.length;
+  assert.deepEqual([result.subject_count, result.snapshot_count, result.observation_count], [count, 2, count * 2]);
+  assert.deepEqual(result.snapshots.map(row => [row.loaded, row.complete, row.missing_rank, row.missing_score]), [
+    [count, count, 0, 0], [count, count, 0, 0],
+  ]);
+  assert.ok(result.recent_runs.some(row => row.trigger === 'scheduled' && row.outcome === 'unchanged'));
+  assert.ok(result.recent_runs.some(row => row.trigger === 'manual' && row.outcome === 'unchanged'));
+  assert.ok(result.recent_runs.some(row => row.trigger === 'cli' && row.outcome === 'updated'));
+  assert.equal(result.refresh_summary.total, result.recent_runs.length - 1);
+
+  const partial = await (await page.request.get(urls.adminPartial + endpoint, {headers})).json();
+  assert.equal(partial.observation_count, 7);
+  assert.deepEqual(partial.snapshots.map(row => [row.population_size, row.loaded, row.complete, row.missing_rank, row.missing_score]), [
+    [4, 4, 2, 1, 1], [4, 3, 3, 0, 0],
+  ]);
+  assert.deepEqual(partial.refresh_summary, {total: 0, updated: 0, unchanged: 0, errors: 0});
+
+  const context = await browser.newContext({httpCredentials: adminCredentials, viewport: {width: 375, height: 812}});
+  try {
+    const panel = await context.newPage();
+    await panel.goto(urls.admin + '/admin/');
+    await panel.getByRole('heading', {name: 'Аналитика данных и загрузок'}).waitFor();
+    await panel.locator('#admin-analytics-content').waitFor();
+    assert.equal(await panel.locator('#admin-observation-count').innerText(), String(count * 2));
+    assert.match(await panel.locator('#admin-coverage-table tbody tr').first().innerText(), new RegExp(`${count} из 85`));
+    assert.equal(await panel.evaluate(() => document.documentElement.scrollWidth), 375);
+  } finally {
+    await context.close();
+  }
+});
+
+test('A36 · импорт источника и выбор загруженного рейтинга', async page => {
+  const endpoint = urls.admin + '/admin/api/v1/sources';
+  const headers = {Authorization: adminHeader, 'Content-Type': 'application/json'};
+  assert.equal((await page.request.get(endpoint)).status(), 401);
+  assert.equal((await page.request.post(endpoint, {data: {}})).status(), 401);
+  const example = await page.request.get(urls.admin + '/admin/example.json', {headers});
+  assert.equal(example.status(), 200);
+  const dataset = await example.json();
+  dataset.rating_id = 'e2e-new-source';
+  dataset.rating_title = 'Рейтинг из нового источника';
+  for (const subject of dataset.subjects) subject.subject_id = subject.subject_id.replace('demo-', 'new-');
+  for (const snapshot of dataset.snapshots) {
+    for (const row of snapshot.rows) row.subject_id = row.subject_id.replace('demo-', 'new-');
+  }
+  const [current, previous] = dataset.snapshots;
+  current.source = {title: 'Тестовая публикация', reference: 'https://example.com/rating', published_on: '2026-02-01'};
+  dataset.snapshots = [current];
+
+  const context = await browser.newContext({httpCredentials: adminCredentials});
+  try {
+    const panel = await context.newPage();
+    await panel.goto(urls.admin + '/admin/');
+    await panel.getByLabel('Файл рейтинга').setInputFiles({
+      name: 'rating.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(dataset)),
+    });
+    const accepted = panel.waitForResponse(res => res.url() === endpoint && res.request().method() === 'POST');
+    await panel.getByRole('button', {name: 'Добавить источник'}).click();
+    assert.equal((await accepted).status(), 201);
+    await panel.locator('#admin-import-status').filter({hasText: '2025'}).waitFor();
+    await panel.getByRole('link', {name: dataset.rating_title}).click();
+    await panel.locator('#report').waitFor();
+    assert.equal(await panel.locator('#rating-title').innerText(), dataset.rating_title);
+    assert.match(await panel.locator('#report').innerText(), /Тестовая публикация/);
+  } finally {
+    await context.close();
+  }
+
+  const save = snapshots => page.request.post(endpoint, {headers, data: {...dataset, snapshots}});
+  assert.equal((await save([previous])).status(), 201);
+  assert.equal((await save([current, {...previous, period: '2023'}])).status(), 409);
+  assert.equal((await page.request.post(endpoint, {headers, data: '{'})).status(), 400);
+  const {sources} = await (await page.request.get(endpoint, {headers})).json();
+  assert.deepEqual(sources.filter(row => row.rating_id === dataset.rating_id).map(row => row.period), ['2025', '2024']);
+  const defaultRating = await (await page.request.get(urls.admin + '/api/v1/rating')).json();
+  assert.equal(defaultRating.rating_id, riaDataset.rating_id);
 });
 
 if (urls.live) {

@@ -14,6 +14,10 @@ class RatingMissing(StoreError):
     """Настроенный рейтинг ещё не загружен."""
 
 
+class SourceConflict(StoreError):
+    """Добавление затронуло бы существующий выпуск или справочник."""
+
+
 class Postgres:
     def __init__(self, dsn: str):
         self.dsn = dsn
@@ -34,14 +38,17 @@ class Postgres:
         except psycopg.Error as error:
             raise StoreError(_database_message(error)) from error
 
-    def save(self, dataset: Dataset):
+    def save(self, dataset: Dataset, *, append_only=False):
         try:
             with self._connect() as conn:
                 identifier = dataset.rating_id
-                conn.execute("""
-                    INSERT INTO ratings (rating_id, title, data_kind) VALUES (%s, %s, %s)
-                    ON CONFLICT (rating_id) DO UPDATE SET title = EXCLUDED.title, data_kind = EXCLUDED.data_kind
-                    """, (identifier, dataset.title, dataset.data_kind))
+                if append_only:
+                    self._check_append(conn, dataset)
+                else:
+                    conn.execute("""
+                        INSERT INTO ratings (rating_id, title, data_kind) VALUES (%s, %s, %s)
+                        ON CONFLICT (rating_id) DO UPDATE SET title = EXCLUDED.title, data_kind = EXCLUDED.data_kind
+                        """, (identifier, dataset.title, dataset.data_kind))
                 with conn.cursor() as cursor:
                     cursor.executemany("""
                         INSERT INTO subjects (rating_id, subject_id, name) VALUES (%s, %s, %s)
@@ -51,6 +58,42 @@ class Postgres:
                         self._save_snapshot(cursor, identifier, snapshot)
         except psycopg.Error as error:
             raise StoreError(_database_message(error)) from error
+
+    def _check_append(self, conn, dataset):
+        identifier = dataset.rating_id
+        conn.execute("""
+            INSERT INTO ratings (rating_id, title, data_kind) VALUES (%s, %s, %s)
+            ON CONFLICT (rating_id) DO NOTHING
+            """, (identifier, dataset.title, dataset.data_kind))
+        rating = conn.execute("SELECT title, data_kind FROM ratings WHERE rating_id = %s FOR UPDATE", (identifier,)).fetchone()
+        if (rating["title"], rating["data_kind"]) != (dataset.title, dataset.data_kind):
+            raise SourceConflict("Название или тип данных не совпадают с существующим рейтингом. Укажите другой rating_id.")
+        existing = conn.execute("""
+            SELECT period FROM rating_snapshots WHERE rating_id = %s AND period = ANY(%s) ORDER BY period
+            """, (identifier, list(dataset.snapshots))).fetchall()
+        if existing:
+            years = ", ".join(row["period"] for row in existing)
+            raise SourceConflict(f"Выпуски уже существуют: {years}. Удалите эти годы из загружаемого файла.")
+        for subject in conn.execute("""
+            SELECT subject_id, name FROM subjects WHERE rating_id = %s AND subject_id = ANY(%s)
+            """, (identifier, list(dataset.subjects))):
+            if subject["name"] != dataset.subjects[subject["subject_id"]]:
+                raise SourceConflict(f"Название субъекта {subject['subject_id']} не совпадает со справочником рейтинга.")
+
+    def sources(self):
+        try:
+            with self._connect() as conn:
+                rows = conn.execute("""
+                    SELECT s.rating_id, r.title AS rating_title, r.data_kind, s.period,
+                           s.source_title, s.source_reference, s.published_on, s.data_reference
+                    FROM rating_snapshots s JOIN ratings r USING (rating_id)
+                    ORDER BY r.title, s.rating_id, s.period DESC
+                    """).fetchall()
+        except psycopg.Error as error:
+            raise StoreError(_database_message(error)) from error
+        for row in rows:
+            row["published_on"] = row["published_on"].isoformat()
+        return rows
 
     def _save_snapshot(self, cursor, identifier, snapshot):
         source = snapshot.source

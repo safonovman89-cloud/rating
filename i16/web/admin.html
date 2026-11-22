@@ -28,6 +28,23 @@
       <button type="button" id="admin-refresh" disabled>Проверить сейчас</button>
       <p id="admin-feedback" role="status"></p>
     </section>
+    <section class="admin-analytics" aria-labelledby="admin-sources-title">
+      <h2 id="admin-sources-title">Источники данных</h2>
+      <p>Загрузите JSON до 2 МиБ с новым рейтингом или выпуском. <a href="/admin/example.json">Скачать пример</a>.</p>
+      <form id="admin-import">
+        <label for="admin-dataset">Файл рейтинга</label>
+        <input id="admin-dataset" name="dataset" type="file" accept=".json,application/json" required>
+        <button type="submit">Добавить источник</button>
+      </form>
+      <p id="admin-import-status" role="status"></p>
+      <p id="admin-sources-status" role="status">Загрузка источников…</p>
+      <div id="admin-sources-table" class="table-area" role="region" aria-labelledby="admin-sources-title" tabindex="0" hidden>
+        <table aria-labelledby="admin-sources-title">
+          <thead><tr><th scope="col">Рейтинг</th><th scope="col">Выпуск</th><th scope="col">Источник</th><th scope="col">Опубликован</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
     <section class="admin-analytics" aria-labelledby="admin-analytics-title">
       <h2 id="admin-analytics-title">Аналитика данных и загрузок</h2>
       <p id="admin-analytics-status" role="status">Загрузка аналитики…</p>

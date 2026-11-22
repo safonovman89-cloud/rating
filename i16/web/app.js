@@ -20,6 +20,7 @@ const executiveDetails = document.querySelector('#executive-details');
 const printButton = document.querySelector('#executive-print-button');
 const printView = document.querySelector('#executive-print');
 const riaId = 'ria-social-economic-regions';
+const ratingId = new URLSearchParams(location.search).get('rating_id');
 const checks = [
   ['Занятость и безработица', 'https://rosstat.gov.ru/labour_force'],
   ['Реальные денежные доходы', 'https://rosstat.gov.ru/folder/13397'],
@@ -44,6 +45,11 @@ function message(text, error = false) {
 }
 
 async function request(url, options) {
+  if (ratingId !== null && url.startsWith('/api/v1/') && url !== '/api/v1/refresh') {
+    const selectedUrl = new URL(url, location.origin);
+    selectedUrl.searchParams.set('rating_id', ratingId);
+    url = selectedUrl;
+  }
   let response;
   try {
     response = await fetch(url, options);
@@ -492,7 +498,10 @@ async function load() {
     const isRia = catalog.rating_id === riaId;
     if (isRia) updateRefreshStatus();
     document.body.classList.toggle('has-executive', isRia);
-    const suggested = isRia ? ['yanao', 'khmao-yugra'] : ['demo-a', 'demo-b', 'demo-c'];
+    const known = isRia ? ['yanao', 'khmao-yugra'] : ['demo-a', 'demo-b', 'demo-c'];
+    const ids = catalog.subjects.map(subject => subject.subject_id);
+    const preferred = known.filter(id => ids.includes(id));
+    const suggested = preferred.length >= 2 ? preferred : ids.slice(0, 2);
     subjects.replaceChildren(...catalog.subjects.map(subject => {
       const label = element('label');
       const input = element('input');

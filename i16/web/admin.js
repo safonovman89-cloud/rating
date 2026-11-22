@@ -13,11 +13,43 @@ const labels = {
 };
 const triggers = {scheduled: 'Автоматически', manual: 'Из панели', cli: 'Из CLI'};
 let lastCheck;
+const importForm = document.querySelector('#admin-import');
+const importStatus = document.querySelector('#admin-import-status');
+const sourcesStatus = document.querySelector('#admin-sources-status');
+const sourcesTable = document.querySelector('#admin-sources-table');
 
 function valueCell(value) {
   const cell = document.createElement('td');
   cell.textContent = value;
   return cell;
+}
+
+function sourceRow(source) {
+  const row = document.createElement('tr');
+  const rating = valueCell('');
+  const link = document.createElement('a');
+  link.href = `/?rating_id=${encodeURIComponent(source.rating_id)}`;
+  link.textContent = source.rating_title;
+  rating.append(link);
+  const publisher = valueCell(source.source_title);
+  const reference = document.createElement(/^https?:\/\//i.test(source.source_reference) ? 'a' : 'small');
+  if (reference instanceof HTMLAnchorElement) reference.href = source.source_reference;
+  reference.className = 'note';
+  reference.textContent = source.source_reference;
+  publisher.append(reference);
+  row.append(rating, valueCell(source.period), publisher, valueCell(source.published_on.split('-').reverse().join('.')));
+  return row;
+}
+
+async function loadSources() {
+  try {
+    const {sources} = await request('/admin/api/v1/sources');
+    sourcesTable.querySelector('tbody').replaceChildren(...sources.map(sourceRow));
+    sourcesTable.hidden = sources.length === 0;
+    sourcesStatus.textContent = sources.length ? '' : 'Источники ещё не загружены.';
+  } catch (error) {
+    sourcesStatus.textContent = error.message;
+  }
 }
 
 function coverageRow(snapshot) {
@@ -90,7 +122,10 @@ async function status() {
     button.disabled = !data.enabled || data.running;
     const previous = lastCheck;
     lastCheck = data.checked_at ?? null;
-    if (previous !== lastCheck) loadAnalytics();
+    if (previous !== lastCheck) {
+      loadAnalytics();
+      loadSources();
+    }
     if (data.running) window.setTimeout(status, 1000);
   } catch {
     stateLabel.textContent = 'Не удалось загрузить состояние проверки';
@@ -110,6 +145,31 @@ button.addEventListener('click', async () => {
     feedback.textContent = error.message;
   }
   status();
+});
+
+importForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const file = importForm.elements.dataset.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    importStatus.textContent = 'Размер файла превышает 2 МиБ.';
+    return;
+  }
+  const submit = importForm.querySelector('button');
+  submit.disabled = true;
+  importStatus.textContent = 'Загружаем источник…';
+  try {
+    const result = await request('/admin/api/v1/sources', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: file,
+    });
+    importStatus.textContent = `Добавлены выпуски за ${result.periods.join(', ')}.`;
+    importForm.reset();
+    await Promise.all([loadSources(), loadAnalytics()]);
+  } catch (error) {
+    importStatus.textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
 });
 
 status();

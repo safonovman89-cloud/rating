@@ -54,6 +54,8 @@ main { padding-block: 28px 48px; }
 .admin-panel button { margin-top: 12px; }
 #admin-feedback:not(:empty) { margin: 8px 0 0; }
 .admin-analytics { margin-top: 24px; }
+#admin-import { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+#admin-dataset { max-width: 100%; min-width: 0; }
 .admin-analytics h3 { margin: 22px 0 8px; }
 .admin-metrics { margin: 0; }
 .admin-metrics dd { margin: 0; font-size: 1.55rem; font-weight: 700; }
