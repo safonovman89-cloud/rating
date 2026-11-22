@@ -7,7 +7,13 @@
     {"subject_id": "yanao", "name": "Ямало-Ненецкий автономный округ"},
     {"subject_id": "khmao-yugra", "name": "Ханты-Мансийский автономный округ — Югра"},
     {"subject_id": "tyumen-oblast", "name": "Тюменская область"},
-    {"subject_id": "sverdlovsk-oblast", "name": "Свердловская область"}
+    {"subject_id": "sverdlovsk-oblast", "name": "Свердловская область"},
+    {"subject_id": "chelyabinsk-oblast", "name": "Челябинская область"},
+    {"subject_id": "kurgan-oblast", "name": "Курганская область"},
+    {"subject_id": "moscow", "name": "Москва"},
+    {"subject_id": "saint-petersburg", "name": "Санкт-Петербург"},
+    {"subject_id": "tatarstan", "name": "Республика Татарстан"},
+    {"subject_id": "moscow-oblast", "name": "Московская область"}
   ],
   "snapshots": [
     {
@@ -27,7 +33,13 @@
         {"subject_id": "yanao", "rank": 10, "score": 68.78},
         {"subject_id": "khmao-yugra", "rank": 6, "score": 76.80},
         {"subject_id": "tyumen-oblast", "rank": 17, "score": 62.24},
-        {"subject_id": "sverdlovsk-oblast", "rank": 5, "score": 77.77}
+        {"subject_id": "sverdlovsk-oblast", "rank": 5, "score": 77.77},
+        {"subject_id": "chelyabinsk-oblast", "rank": 15, "score": 64.70},
+        {"subject_id": "kurgan-oblast", "rank": 63, "score": 37.20},
+        {"subject_id": "moscow", "rank": 1, "score": 94.48},
+        {"subject_id": "saint-petersburg", "rank": 2, "score": 90.21},
+        {"subject_id": "tatarstan", "rank": 3, "score": 86.37},
+        {"subject_id": "moscow-oblast", "rank": 4, "score": 85.55}
       ]
     },
     {
@@ -47,7 +59,13 @@
         {"subject_id": "yanao", "rank": 9, "score": 73.14},
         {"subject_id": "khmao-yugra", "rank": 5, "score": 80.07},
         {"subject_id": "tyumen-oblast", "rank": 15, "score": 67.82},
-        {"subject_id": "sverdlovsk-oblast", "rank": 6, "score": 79.41}
+        {"subject_id": "sverdlovsk-oblast", "rank": 6, "score": 79.41},
+        {"subject_id": "chelyabinsk-oblast", "rank": 13, "score": 68.42},
+        {"subject_id": "kurgan-oblast", "rank": 72, "score": 33.46},
+        {"subject_id": "moscow", "rank": 1, "score": 94.99},
+        {"subject_id": "saint-petersburg", "rank": 2, "score": 90.93},
+        {"subject_id": "tatarstan", "rank": 3, "score": 86.84},
+        {"subject_id": "moscow-oblast", "rank": 4, "score": 84.97}
       ]
     }
   ]

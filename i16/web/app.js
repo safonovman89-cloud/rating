@@ -104,6 +104,81 @@ function sourceLink(label, reference) {
   return element('span', `${label} · ${reference}`);
 }
 
+function chart(title, rows, key, unit, {signed = false, note = ''} = {}) {
+  const panel = element('figure', undefined, 'chart');
+  panel.append(element('figcaption', title));
+  const values = rows.map(row => row[key] === null ? null : Number(row[key]));
+  const known = values.filter(Number.isFinite);
+  if (!known.length) {
+    panel.append(element('p', signed ? 'Сопоставимых значений для графика нет.' : 'Доступных значений для графика нет.', 'note'));
+    if (note) panel.append(element('p', note, 'note'));
+    return panel;
+  }
+
+  const magnitude = Math.max(1, ...known.map(Math.abs));
+  const power = 10 ** Math.floor(Math.log10(magnitude));
+  const limit = Math.ceil(magnitude / power) * power;
+  const minimum = signed || known.some(value => value < 0) ? -limit : 0;
+  const position = value => (value - minimum) / (limit - minimum) * 100;
+  const zero = position(0);
+  const axis = element('div', undefined, 'plot-axis');
+  const ticks = element('div', undefined, 'plot-ticks');
+  ticks.setAttribute('aria-hidden', 'true');
+  ticks.append(element('span', valueText(minimum)), ...(minimum < 0 ? [element('span', '0')] : []), element('span', valueText(limit, signed)));
+  axis.append(ticks, element('span', unit));
+  panel.append(axis);
+
+  const list = element('ul', undefined, 'plot-rows');
+  for (const [index, row] of rows.entries()) {
+    const value = values[index];
+    const line = element('li', undefined, 'plot-row');
+    const track = element('span', undefined, 'plot-track');
+    track.style.setProperty('--axis-zero', `${zero}%`);
+    track.setAttribute('aria-hidden', 'true');
+    if (Number.isFinite(value)) {
+      const tone = !signed ? 'score' : value < 0 ? 'negative' : value > 0 ? 'positive' : 'at-zero';
+      const bar = element('span', undefined, `plot-bar ${tone}`);
+      const edge = position(value);
+      bar.style.setProperty('--start', `${Math.min(zero, edge)}%`);
+      bar.style.setProperty('--length', `${Math.abs(edge - zero)}%`);
+      track.append(bar);
+    }
+    const label = Number.isFinite(value) ? valueText(row[key], signed) : '—';
+    line.append(element('span', row.name, 'plot-name'), track, element('span', label, 'plot-value'));
+    list.append(line);
+  }
+  panel.append(list);
+  if (note || known.length < rows.length) {
+    const coverage = known.length < rows.length ? ` Доступно ${known.length} из ${rows.length} значений.` : '';
+    panel.append(element('p', (note + coverage).trim(), 'note'));
+  }
+  return panel;
+}
+
+function dashboard(result) {
+  const {current, baseline: base, rows} = result;
+  const section = element('section', undefined, 'dashboard');
+  section.append(element('h2', 'Аналитический дашборд'));
+  const grid = element('div', undefined, 'chart-grid');
+  grid.append(chart(`Баллы за ${current.period} год`, rows, 'score', 'баллы'));
+  if (base) {
+    grid.append(
+      chart(`Изменение балла · ${base.period} → ${current.period}`, rows, 'score_delta', 'баллы', {signed: true}),
+      chart(`Изменение места · ${base.period} → ${current.period}`, rows, 'rank_delta', 'места', {
+        signed: true, note: 'Плюс означает улучшение места.',
+      }),
+    );
+  }
+  if (result.gaps.length) {
+    const focusName = rows.find(row => row.subject_id === result.focus_subject_id).name;
+    grid.append(chart(`Разрывы по баллам за ${current.period} год`, result.gaps, 'current', 'баллы', {
+      signed: true, note: `Опорный субъект — ${focusName}. Плюс означает преимущество, минус — отставание.`,
+    }));
+  }
+  section.append(grid);
+  return section;
+}
+
 function render(result) {
   const {current, baseline: base} = result;
   const context = element('p', `Период ${current.period} · ${current.population_size} в рейтинге · Выбрано ${result.rows.length}`
@@ -120,7 +195,7 @@ function render(result) {
     ] : []),
   ]})), 'comparison-table');
   if (base) comparison.append(element('p', 'Плюс в столбце изменения места означает улучшение позиции.', 'note'));
-  output.replaceChildren(context, summary, comparison);
+  output.replaceChildren(context, summary, dashboard(result), comparison);
   if (result.gaps.length) {
     const name = result.rows.find(row => row.subject_id === result.focus_subject_id).name;
     const gapLabels = ['Субъект сравнения', `Разрыв ${current.period}`];
