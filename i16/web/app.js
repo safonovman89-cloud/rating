@@ -33,6 +33,7 @@ let executiveReport;
 let photoCatalog;
 let printing = false;
 let refreshTimer;
+let activeReportTab = 'rating';
 const regionMap = createRegionMap({request, element, sourceLink, valueText, addSubject});
 
 function element(tag, text, style) {
@@ -124,6 +125,8 @@ function updateReportNotice() {
   const unavailable = settings.disabled || output.hidden || stale;
   printButton.disabled = unavailable || printing;
   pdfRegion.disabled = printButton.disabled;
+  const overviewPrint = output.querySelector('#overview-print-button');
+  if (overviewPrint) overviewPrint.disabled = unavailable || printing;
   if (!settings.disabled && executiveReport) pdfRegion.value = executiveReport.subjectId;
   regionMap.setStale(unavailable);
 }
@@ -271,76 +274,84 @@ function reportSources(result) {
   return section;
 }
 
-function publicIndicators(result) {
-  const {series, coverage} = result.public_indicators;
+function indicatorTable(title, rows, columns, id) {
+  if (!columns.length) {
+    const section = element('section');
+    section.append(element('h2', title), element('p', 'Данные пока не загружены.', 'note'));
+    return section;
+  }
+  const labels = ['Субъект', ...columns.map(item => `${item.label} · ${item.period} · ${item.unit}`)];
+  const section = table(title, labels, rows.map(row => ({...row,
+    fields: columns.map(item => [item.values[row.subject_id] ?? null, false]),
+  })), id);
+  section.className = 'indicator-section';
+  const sources = element('ul', undefined, 'note');
+  const unique = new Map(columns.map(item => [`${item.reference} ${item.note}`, item]));
+  for (const item of unique.values()) {
+    const source = element('li');
+    source.append(`${item.note} `, sourceLink(item.source, item.reference));
+    sources.append(source);
+  }
+  section.append(sources);
+  return section;
+}
+
+function aiRankings() {
+  const rankings = element('details', undefined, 'executive-checks full-ai-rankings');
+  const panels = element('div');
+  rankings.append(element('summary', 'Показать рейтинг ИИ по всем регионам'), panels);
+  rankings.addEventListener('toggle', async () => {
+    if (!rankings.open || panels.childElementCount) return;
+    panels.replaceChildren(element('p', 'Загружаем рейтинг…', 'note'));
+    try {
+      const data = await request('/api/v1/ai-ranking');
+      panels.replaceChildren(...data.rankings.map((item, index) => {
+        const labels = ['Субъект', `Место · ${item.unit}`];
+        if (item.value_label) labels.push(item.value_label);
+        const rows = item.rows.map(row => ({...row, fields: [
+          [row.rank, false], ...(item.value_label ? [[row.value, false]] : []),
+        ]}));
+        const ranking = table(`${item.label} · ${item.period}`, labels, rows, `ai-ranking-${index}`);
+        const note = element('p', `${item.note} `, 'note');
+        note.append(sourceLink(item.source, item.reference));
+        ranking.append(note);
+        return ranking;
+      }));
+    } catch (error) {
+      panels.textContent = `${error.message} Закройте и откройте рейтинг, чтобы повторить.`;
+    }
+  });
+  return rankings;
+}
+
+function coverageSection(rows, coverage) {
   const section = element('section');
-  section.id = 'public-indicators';
-  section.append(element('h2', 'Дополнительные показатели регионов'));
-  for (const [group, title] of [['statistics', 'Рождаемость и цены на топливо'], ['ai', 'Искусственный интеллект']]) {
-    const columns = series.filter(item => item.group === group);
-    if (!columns.length) continue;
-    const labels = ['Субъект', ...columns.map(item => `${item.label} · ${item.period} · ${item.unit}`)];
-    const rows = result.rows.map(row => ({...row,
-      fields: columns.map(item => [item.values[row.subject_id] ?? null, false]),
-    }));
-    const groupSection = table(title, labels, rows, `public-indicators-${group}`);
-    const sources = element('ul', undefined, 'note');
-    const groupedSources = new Map();
-    for (const item of columns) {
-      const key = `${item.reference} ${item.note}`;
-      if (!groupedSources.has(key)) groupedSources.set(key, item);
-    }
-    for (const item of groupedSources.values()) {
-      const source = element('li');
-      source.append(`${item.note} `, sourceLink(item.source, item.reference));
-      sources.append(source);
-    }
-    groupSection.append(sources);
-    section.append(groupSection);
-  }
-  if (series.some(item => item.id === 'ai-activity-rank' || item.id === 'ai-adoption-rank')) {
-    const rankings = element('details', undefined, 'executive-checks');
-    const panels = element('div');
-    const open = element('summary', 'Показать рейтинг ИИ по всем регионам');
-    rankings.append(open, panels);
-    open.addEventListener('click', async () => {
-      if (rankings.open || panels.childElementCount) return;
-      panels.append(element('p', 'Загружаем рейтинг…', 'note'));
-      try {
-        const data = await request('/api/v1/ai-ranking');
-        panels.replaceChildren(...data.rankings.map((item, index) => {
-          const labels = ['Субъект', `Место · ${item.unit}`];
-          if (item.value_label) labels.push(item.value_label);
-          const rows = item.rows.map(row => ({...row, fields: [
-            [row.rank, false], ...(item.value_label ? [[row.value, false]] : []),
-          ]}));
-          const ranking = table(`${item.label} · ${item.period}`, labels, rows, `ai-ranking-${index}`);
-          const note = element('p', `${item.note} `, 'note');
-          note.append(sourceLink(item.source, item.reference));
-          ranking.append(note);
-          return ranking;
-        }));
-      } catch (error) {
-        panels.replaceChildren();
-        panels.textContent = `${error.message} Закройте и откройте рейтинг, чтобы повторить.`;
-      }
-    });
-    section.append(rankings);
-  }
-  if (!series.length) section.append(element('p', 'Дополнительная статистика пока не загружена.', 'note'));
   const coverageNote = element('p', 'Операторы показывают расчётные зоны сигнала. Сопоставимая доля населения с покрытием по регионам в И16 отсутствует. ', 'note');
   coverageNote.append(sourceLink('Карта Т2 с выбором региона', coverage.directory));
   const maps = element('ul');
-  for (const row of result.rows) {
+  for (const row of rows) {
     const map = coverage.maps[row.subject_id];
     if (!map) continue;
     const item = element('li');
     item.append(`${row.name} · `, sourceLink(`Карта ${map.operator}`, map.reference));
     maps.append(item);
   }
-  section.append(element('h3', 'Покрытие сотовой связи'), coverageNote);
+  section.append(element('h2', 'Покрытие сотовой связи'), coverageNote);
   if (maps.childElementCount) section.append(maps);
   return section;
+}
+
+function indicatorGroups(series) {
+  const groups = {demography: [], fuel: [], ai: [], statistics: []};
+  for (const item of series) {
+    let group = item.group;
+    if (group === 'statistics') {
+      if (item.id.startsWith('birth-rate-')) group = 'demography';
+      if (/^(ai92|diesel)-/.test(item.id)) group = 'fuel';
+    }
+    groups[group].push(item);
+  }
+  return groups;
 }
 
 function chart(title, rows, key, unit, {signed = false, note = ''} = {}) {
@@ -588,36 +599,134 @@ function fillPrintView(result, photo) {
   printView.append(reportSources(result));
 }
 
-function render(result) {
+function ratingSections(result, overview = false) {
   const {current, baseline: base} = result;
-  const context = element('p', `Период ${current.period} · ${current.population_size} в рейтинге · Выбрано ${result.rows.length}`
-    + (base ? ` · База ${base.period} (${base.population_size} в рейтинге)` : ''), 'context');
-  const summary = element('section', undefined, 'summary');
+  const prefix = overview ? 'overview-' : '';
+  const summary = element('section', undefined, overview ? 'overview-summary' : 'summary');
   summary.append(element('h2', 'Краткий итог'), ...result.summary.map(line => element('p', line)));
   const mode = result.brief_mode === 'ai_assisted' ? 'Итог составлен с помощью ИИ по рассчитанным фактам.' : 'Итог составлен по шаблону.';
   summary.append(element('p', mode, 'note'));
-  const comparison = comparisonTable(result, result.rows, 'comparison-table');
+  const comparison = comparisonTable(result, result.rows, `${prefix}comparison-table`);
   if (base) comparison.append(element('p', 'Плюс в столбце изменения места означает улучшение позиции.', 'note'));
-  output.replaceChildren(context, summary, dashboard(result), comparison);
+  const sections = [summary, ...(overview ? [] : [dashboard(result)]), comparison];
   if (result.gaps.length) {
     const name = result.rows.find(row => row.subject_id === result.focus_subject_id).name;
     const gapLabels = ['Субъект сравнения', `Разрыв ${current.period}`];
     if (base) gapLabels.push(`Разрыв ${base.period}`, 'Δ разрыва');
     const gaps = table('Разрывы по баллам', gapLabels, result.gaps.map(row => ({...row, fields: [
       [row.current, true], ...(base ? [[row.baseline, true], [row.delta, true]] : []),
-    ]})), 'gap-table');
+    ]})), `${prefix}gap-table`);
     gaps.append(element('p', `Опорный субъект — ${name}. Плюс означает преимущество, минус — отставание.`, 'note'));
-    output.append(gaps);
+    sections.push(gaps);
   }
   if (result.partial) {
     const limits = element('section', undefined, 'limits');
     const list = element('ul');
     list.append(...result.limits.map(limit => element('li', limit)));
     limits.append(element('h2', 'Ограничения сравнения'), list);
-    output.append(limits);
+    sections.push(limits);
   }
-  if (result.public_indicators) output.append(publicIndicators(result));
-  output.append(reportSources(result));
+  sections.push(reportSources(result));
+  return sections;
+}
+
+async function printOverview() {
+  const button = output.querySelector('#overview-print-button');
+  const prepared = executiveReport;
+  if (button.disabled || !prepared) return;
+  printing = true;
+  updateReportNotice();
+  try {
+    await photoForPrint(prepared.photo);
+    if (prepared !== executiveReport || settings.disabled
+        || displayedParameters !== JSON.stringify(comparisonParameters())) return;
+    document.body.classList.add('print-overview');
+    window.print();
+  } finally {
+    printing = false;
+    updateReportNotice();
+  }
+}
+
+function reportTabs(result) {
+  const {coverage, series} = result.public_indicators;
+  const groups = indicatorGroups(series);
+  const definitions = [
+    ['demography', 'Демография', 'Рождаемость'], ['fuel', 'Топливо', 'Цены на топливо'],
+    ['coverage', 'Связь', 'Покрытие сотовой связи'], ['ai', 'ИИ', 'Искусственный интеллект'],
+  ];
+  if (groups.statistics.length) definitions.push(['statistics', 'Другие показатели', 'Другие показатели']);
+  const thematic = (id, title, prefix = '') => id === 'coverage' ? coverageSection(result.rows, coverage)
+    : indicatorTable(title, result.rows, groups[id], `${prefix}${id}-table`);
+
+  const overviewPrint = element('button', 'Сохранить итоговую справку в PDF');
+  overviewPrint.type = 'button';
+  overviewPrint.id = 'overview-print-button';
+  overviewPrint.addEventListener('click', printOverview);
+  const overviewHead = element('div', undefined, 'report-overview-head');
+  overviewHead.append(element('h2', 'Итоговая справка'), overviewPrint);
+  const tabs = [
+    ['rating', 'Рейтинг', ratingSections(result)],
+    ...definitions.map(([id, label, title]) => [id, label, [thematic(id, title)]]),
+    ['overview', 'Итоговая справка', [overviewHead, ...ratingSections(result, true),
+      ...definitions.map(([id, , title]) => thematic(id, title, 'overview-'))]],
+  ];
+  const list = element('div', undefined, 'report-tabs');
+  list.setAttribute('role', 'tablist');
+  list.setAttribute('aria-label', 'Показатели и итоговая справка');
+  const container = element('div');
+  container.id = 'public-indicators';
+  container.append(list);
+  const elements = tabs.map(([id, label, sections]) => {
+    const tab = element('button', label);
+    tab.type = 'button';
+    tab.id = `report-tab-${id}`;
+    tab.setAttribute('role', 'tab');
+    const panel = element('div', undefined, id === 'overview' ? 'report-panel report-overview' : 'report-panel');
+    panel.id = `report-panel-${id}`;
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', tab.id);
+    panel.tabIndex = 0;
+    tab.setAttribute('aria-controls', panel.id);
+    panel.append(...sections);
+    if (id === 'ai' && groups.ai.some(item => item.id === 'ai-activity-rank' || item.id === 'ai-adoption-rank')) {
+      panel.append(aiRankings());
+    }
+    list.append(tab);
+    container.append(panel);
+    return {id, tab, panel};
+  });
+  function activate(index) {
+    activeReportTab = elements[index].id;
+    elements.forEach(({tab, panel}, position) => {
+      const selected = index === position;
+      tab.tabIndex = selected ? 0 : -1;
+      tab.setAttribute('aria-selected', String(selected));
+      panel.hidden = !selected;
+    });
+  }
+  elements.forEach(({tab}, index) => {
+    tab.addEventListener('click', () => activate(index));
+    tab.addEventListener('keydown', event => {
+      const length = elements.length;
+      const destinations = {ArrowLeft: (index + length - 1) % length, ArrowRight: (index + 1) % length,
+        Home: 0, End: length - 1};
+      if (!Object.hasOwn(destinations, event.key)) return;
+      event.preventDefault();
+      const next = destinations[event.key];
+      activate(next);
+      elements[next].tab.focus();
+    });
+  });
+  activate(Math.max(0, elements.findIndex(tab => tab.id === activeReportTab)));
+  return container;
+}
+
+function render(result) {
+  const {current, baseline: base} = result;
+  const context = element('p', `Период ${current.period} · ${current.population_size} в рейтинге · Выбрано ${result.rows.length}`
+    + (base ? ` · База ${base.period} (${base.population_size} в рейтинге)` : ''), 'context');
+  output.replaceChildren(context, ...(result.public_indicators ? [reportTabs(result)] : ratingSections(result)));
   const photo = result.data_kind === 'production' ? regionPhoto(executiveSelection(result).subject) : Promise.resolve(null);
   photo.then(figure => { if (figure) context.after(figure); });
   renderExecutive(result, photo);
@@ -706,7 +815,7 @@ pdfRegion.addEventListener('change', () => {
   runComparison();
 });
 printButton.addEventListener('click', printExecutive);
-window.addEventListener('afterprint', () => document.body.classList.remove('print-executive'));
+window.addEventListener('afterprint', () => document.body.classList.remove('print-executive', 'print-overview'));
 retry.addEventListener('click', load);
 form.addEventListener('submit', event => {
   event.preventDefault();

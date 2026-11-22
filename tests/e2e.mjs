@@ -759,11 +759,14 @@ test('A41 · независимые показатели и карты след�
   await ready(page, urls.indicators);
   const indicators = page.locator('#public-indicators');
   await indicators.waitFor();
-  assert.deepEqual(await cells(page, 'Рождаемость и цены на топливо', 'yanao'), ['0']);
-  assert.deepEqual(await cells(page, 'Рождаемость и цены на топливо', 'khmao-yugra'), ['—']);
-  assert.deepEqual(await cells(page, 'Искусственный интеллект', 'yanao'), ['5']);
+  await indicators.getByRole('tab', {name: 'Демография'}).click();
+  assert.deepEqual(await cells(page, 'Рождаемость', 'yanao'), ['0']);
+  assert.deepEqual(await cells(page, 'Рождаемость', 'khmao-yugra'), ['—']);
   assert.equal(await indicators.getByRole('link', {name: 'Тестовый источник'}).getAttribute('href'), 'https://example.test/births');
+  await indicators.getByRole('tab', {name: 'Связь'}).click();
   assert.equal(await indicators.getByRole('link', {name: 'Карта МТС', exact: true}).count(), 2);
+  await indicators.getByRole('tab', {name: 'ИИ', exact: true}).click();
+  assert.deepEqual(await cells(page, 'Искусственный интеллект', 'yanao'), ['5']);
   await indicators.getByText('Показать рейтинг ИИ по всем регионам', {exact: true}).click();
   const ranking = indicators.getByRole('table', {name: 'Место по активности ИИ · 2026'});
   await ranking.waitFor();
@@ -772,8 +775,10 @@ test('A41 · независимые показатели и карты след�
   await page.locator('#period').selectOption('2024');
   await page.getByRole('checkbox', {name: /Тюменская область/}).check();
   await submit(page);
-  assert.deepEqual(await cells(page, 'Рождаемость и цены на топливо', 'tyumen-oblast'), ['6,5']);
-  assert.equal(await indicators.getByText('Рождаемость · 2023 · на 1 000 человек', {exact: true}).count(), 1);
+  await indicators.getByRole('tab', {name: 'Демография'}).click();
+  assert.deepEqual(await cells(page, 'Рождаемость', 'tyumen-oblast'), ['6,5']);
+  assert.equal(await indicators.getByRole('columnheader', {name: 'Рождаемость · 2023 · на 1 000 человек'}).count(), 1);
+  await indicators.getByRole('tab', {name: 'Связь'}).click();
   assert.equal(await indicators.getByRole('link', {name: 'Карта Т2', exact: true}).count(), 1);
 });
 
@@ -817,6 +822,50 @@ test('A42 · отправка обратной связи и защищённы�
   } finally {
     await panel.close();
   }
+});
+
+test('A43 · вкладки и итоговый PDF по одному сравнению', async page => {
+  await page.addInitScript(() => { window.print = () => {}; });
+  await page.setViewportSize({width: 375, height: 760});
+  await ready(page, urls.indicators);
+  const tabs = page.getByRole('tablist', {name: 'Показатели и итоговая справка'});
+  assert.deepEqual(await tabs.getByRole('tab').allTextContents(), ['Рейтинг', 'Демография', 'Топливо', 'Связь', 'ИИ', 'Итоговая справка']);
+  const active = tabs.getByRole('tab', {selected: true});
+  await active.press('ArrowRight');
+  assert.equal(await active.textContent(), 'Демография');
+  await active.press('ArrowRight');
+  assert.equal(await active.textContent(), 'Топливо');
+  assert.deepEqual(await cells(page, 'Цены на топливо', 'yanao'), ['62,86']);
+  assert.equal(await page.getByRole('table', {name: 'Рождаемость'}).count(), 0);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 375);
+
+  await page.getByRole('checkbox', {name: /Тюменская область/}).check();
+  await submit(page);
+  assert.equal(await active.textContent(), 'Топливо');
+  assert.deepEqual(await cells(page, 'Цены на топливо', 'tyumen-oblast'), ['—']);
+  await active.press('End');
+  assert.equal(await active.textContent(), 'Итоговая справка');
+  const overview = page.getByRole('tabpanel', {name: 'Итоговая справка'});
+  assert.deepEqual(await overview.getByRole('table').evaluateAll(tables => tables.map(t => t.tBodies[0].rows.length)), [3, 2, 3, 3, 3]);
+  const print = overview.getByRole('button', {name: 'Сохранить итоговую справку в PDF'});
+  await page.locator('#baseline').selectOption('');
+  assert.ok(await print.isDisabled());
+  await page.locator('#baseline').selectOption('2024');
+  assert.ok(await print.isEnabled());
+  await print.click();
+  await page.locator('body.print-overview').waitFor();
+  await page.emulateMedia({media: 'print'});
+  assert.equal(await overview.getByRole('table').count(), 5);
+  assert.equal(await overview.getByRole('link', {name: 'Карта Т2', exact: true}).count(), 1);
+  assert.equal(await overview.getByRole('link', {name: 'Тестовый индекс'}).count(), 1);
+  assert.equal(await page.locator('#report .region-photo img').getAttribute('src'), '/region-photos/yanao.jpg');
+  assert.equal(await tabs.isVisible(), false);
+  const pdf = await page.pdf({path: join(outputDir, 'overview-selected-regions.pdf'), preferCSSPageSize: true});
+  assert.match(pdf.toString('latin1'), /\/MediaBox\s*\[0 0 59[45](?:\.\d+)? 84[01](?:\.\d+)?\]/);
+  assert.match(pdf.toString('latin1'), /\/Subtype\s*\/Image\b/);
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await page.emulateMedia({media: 'screen'});
+  assert.ok(await print.isVisible());
 });
 
 if (urls.liveHelp) {
