@@ -95,7 +95,8 @@ test('A15/V01–V04 · демосправка, ширина 1280/375, прокр
   }));
   await page.setViewportSize({width: 1280, height: 900});
   await page.emulateMedia({media: 'print'});
-  assert.equal(await page.locator('form').isVisible(), false);
+  assert.equal(await page.locator('#comparison-form').isVisible(), false);
+  assert.equal(await page.locator('[data-help-page]').isVisible(), false);
   assert.equal(await page.locator('.hero').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(255, 255, 255)');
   assert.ok(await page.getByRole('columnheader', {name: 'Δ балла'}).isVisible());
   const pdf = await page.pdf({format: 'A4', printBackground: false});
@@ -538,6 +539,12 @@ test('A37 · регистрация по email, кабинет аналитик�
   await page.getByRole('button', {name: 'Подтвердить вход'}).click();
   await page.waitForURL('**/workspace/');
   await page.locator('#workspace-email').filter({hasText: email}).waitFor();
+  await page.getByRole('button', {name: 'Помощник', exact: true}).click();
+  const help = page.getByRole('dialog', {name: 'Помощник по сервису'});
+  await help.getByLabel('Что хотите узнать?').fill('Что делает эта панель?');
+  await help.getByRole('button', {name: 'Спросить', exact: true}).click();
+  assert.match(await help.getByRole('status').innerText(), /доступные рейтинги и годы выпусков/);
+  await help.getByRole('button', {name: 'Закрыть', exact: true}).click();
   assert.equal((await page.request.post(verifyEndpoint, {data: {token}})).status(), 400);
   assert.equal((await page.request.get(urls.auth + '/admin/api/v1/sources')).status(), 401);
   const cookie = (await page.context().cookies()).find(item => item.name === 'i16_workspace');
@@ -560,6 +567,51 @@ test('A37 · регистрация по email, кабинет аналитик�
   await page.goto(expiredLink);
   await page.getByRole('button', {name: 'Подтвердить вход'}).click();
   await page.getByRole('status').filter({hasText: 'Ссылка истекла'}).waitFor();
+});
+
+test('A38 · помощник отвечает на вопросы о разделах и ведёт к панели', async page => {
+  await ready(page, urls.ria);
+  await page.locator('#regional-map').waitFor();
+  await page.getByRole('button', {name: 'Помощник', exact: true}).click();
+  const help = page.getByRole('dialog', {name: 'Помощник по сервису'});
+  const input = help.getByLabel('Что хотите узнать?');
+  const answer = help.getByRole('status');
+  const ask = async question => {
+    await input.fill(question);
+    await help.getByRole('button', {name: 'Спросить', exact: true}).click();
+  };
+  await ask('Объясни, что показывают цвета на карте');
+  assert.match(await answer.innerText(), /балл или место каждого региона/);
+  await answer.getByRole('link', {name: 'Перейти к разделу'}).click();
+  assert.ok(page.url().endsWith('#regional-map'));
+  assert.equal(await help.isVisible(), false);
+
+  await page.setViewportSize({width: 375, height: 812});
+  await page.getByRole('button', {name: 'Помощник', exact: true}).click();
+  await ask('Зачем нужен базовый год?');
+  assert.match(await answer.innerText(), /Базовый период — год/);
+  assert.ok((await help.boundingBox()).width <= 375);
+  await ask('Какой рецепт борща?');
+  assert.match(await answer.innerText(), /Выберите тему выше/);
+  await help.getByRole('button', {name: 'Параметры сравнения'}).click();
+  assert.match(await answer.innerText(), /минимум два субъекта/);
+  await page.keyboard.press('Escape');
+  assert.equal(await help.isVisible(), false);
+
+  const context = await browser.newContext({httpCredentials: adminCredentials});
+  try {
+    const panel = await context.newPage();
+    await panel.goto(urls.admin + '/admin/');
+    await panel.getByRole('button', {name: 'Помощник', exact: true}).click();
+    const adminHelp = panel.getByRole('dialog');
+    await adminHelp.getByLabel('Что хотите узнать?').fill('Где посмотреть журнал последних запусков?');
+    await adminHelp.getByRole('button', {name: 'Спросить', exact: true}).click();
+    const explanation = adminHelp.getByRole('status');
+    assert.match(await explanation.innerText(), /Журнал показывает/);
+    assert.equal(await explanation.getByRole('link').getAttribute('href'), '#admin-analytics-title');
+  } finally {
+    await context.close();
+  }
 });
 
 if (urls.live) {

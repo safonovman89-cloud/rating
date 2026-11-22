@@ -7,13 +7,17 @@
   <link rel="icon" href="/favicon.ico">
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" type="module"></script>
+  <script src="/help.js" defer></script>
 </head>
 <body>
   <header class="hero">
     <div class="wrap">
       <div class="hero-nav">
         <p class="kicker">И16 · Аналитическая справка <span id="demo-label" hidden>Демонстрационные данные</span></p>
-        <a href="/workspace/">Рабочая область</a>
+        <div class="hero-actions">
+          <a href="/workspace/">Рабочая область</a>
+          <button type="button" class="help-open" data-help-page="rating">Помощник</button>
+        </div>
       </div>
       <h1>Сравнение субъектов <br>по рейтингу</h1>
       <p id="rating-title" class="rating-title"></p>

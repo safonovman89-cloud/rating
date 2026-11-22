@@ -22,6 +22,7 @@ STATIC = {
     "/favicon.ico": ("favicon.ico", "image/vnd.microsoft.icon"),
     "/login/": ("login.html", "text/html; charset=utf-8"),
     "/workspace.js": ("workspace.js", "text/javascript; charset=utf-8"),
+    "/help.js": ("help.js", "text/javascript; charset=utf-8"),
 }
 
 

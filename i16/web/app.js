@@ -519,6 +519,7 @@ async function load() {
     settings.disabled = false;
     message('');
     if (period.value && selected().length >= 2) await runComparison();
+    document.getElementById(location.hash.slice(1))?.scrollIntoView();
   } catch (error) {
     message(error.message, true);
     retry.hidden = false;
