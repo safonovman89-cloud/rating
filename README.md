@@ -25,24 +25,28 @@
 
 Для запуска используйте Python 3.11+ и доступный PostgreSQL. Пример ниже использует PostgreSQL 17 в Docker. На Mac с отдельным профилем Colima используйте `docker --context colima-i16` вместо `docker`.
 
+Для первой инициализации PostgreSQL на пустом томе сгенерируйте пароль и подготовьте строку подключения в той же оболочке.
+
 ```sh
+export POSTGRES_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 docker run -d --name i16-postgres \
   -p 127.0.0.1:55416:5432 \
-  -e POSTGRES_USER=i16 -e POSTGRES_PASSWORD=i16-local -e POSTGRES_DB=i16 \
+  -e POSTGRES_USER=i16 -e POSTGRES_PASSWORD -e POSTGRES_DB=i16 \
   -v i16-rating-data:/var/lib/postgresql/data postgres:17-alpine
+export DATABASE_URL="postgresql://i16:${POSTGRES_PASSWORD}@127.0.0.1:55416/i16"
+unset POSTGRES_PASSWORD
 ```
 
-Для уже созданного остановленного контейнера выполните `docker start i16-postgres`. Подготовьте окружение и схему из корня проекта.
+Сохраните `DATABASE_URL` в локальных настройках подключения. Для уже созданного контейнера используйте его действующую строку подключения, а если он остановлен, выполните `docker start i16-postgres`. Подготовьте окружение и схему из корня проекта.
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-export DATABASE_URL=postgresql://i16:i16-local@127.0.0.1:55416/i16
 python -m i16 migrate
 ```
 
-В локальном примере PostgreSQL доступен по адресу `127.0.0.1:55416`, база и пользователь называются `i16`. В клиенте PostgreSQL используйте эти значения и пароль из команды создания контейнера. Если установлен `psql`, выполните `psql "$DATABASE_URL" -c 'SELECT current_database();'`.
+В локальном примере PostgreSQL доступен по адресу `127.0.0.1:55416`, база и пользователь называются `i16`. Чтобы проверить подключение, выполните `psql -h 127.0.0.1 -p 55416 -U i16 -d i16 -c 'SELECT current_database();'` и введите пароль при запросе.
 
 ### Запуск с демонабором
 
@@ -126,7 +130,7 @@ python -m i16 serve --rating-id ria-social-economic-regions --port 8016 --refres
 
 ## Локальный MCP-сервер
 
-После установки `requirements.txt` запустите как подпроцесс MCP-клиента `python -m i16 mcp --rating-id ria-social-economic-regions` из корня проекта с заданным `DATABASE_URL`. Транспорт — `stdio`. Поддерживаются `get_rating`, `compare_regions` и `get_map_indicators`. Пример конфигурации для клиента, который принимает `mcpServers`:
+После установки `requirements.txt` запустите как подпроцесс MCP-клиента `python -m i16 mcp --rating-id ria-social-economic-regions` из корня проекта с заданным `DATABASE_URL`. Транспорт — `stdio`. Поддерживаются `get_rating`, `compare_regions` и `get_map_indicators`. В конфигурации `mcpServers` подставьте строку подключения из локальных настроек.
 
 ```json
 {
@@ -136,7 +140,7 @@ python -m i16 serve --rating-id ria-social-economic-regions --port 8016 --refres
       "args": ["-m", "i16", "mcp", "--rating-id", "ria-social-economic-regions"],
       "env": {
         "PYTHONPATH": "/absolute/path/to/i16",
-        "DATABASE_URL": "postgresql://i16:i16-local@127.0.0.1:55416/i16"
+        "DATABASE_URL": "<ваша строка подключения>"
       }
     }
   }
@@ -154,7 +158,7 @@ npm ci
 npx playwright install chromium --only-shell
 ```
 
-Для каждого прогона выполните `npm run test:e2e`. Команда создаёт отдельную базу, применяет миграции, импортирует наборы, проверяет CLI, API и веб-клиент и удаляет тестовую базу. По умолчанию используется локальный PostgreSQL из инструкции выше. Для другого подключения задайте `I16_TEST_DATABASE_URL` с ролью, имеющей право `CREATEDB`. Если нужен установленный браузер на Chromium, задайте путь к его исполняемому файлу в `I16_E2E_BROWSER`.
+Перед прогоном выполните `export I16_TEST_DATABASE_URL="$DATABASE_URL"` или задайте другую строку подключения с ролью, имеющей право `CREATEDB`. Команда `npm run test:e2e` создаёт отдельную базу, применяет миграции, импортирует наборы, проверяет CLI, API и веб-клиент и удаляет тестовую базу. Если нужен установленный браузер на Chromium, задайте путь к его исполняемому файлу в `I16_E2E_BROWSER`.
 
 Журнал сервера и снимки неудачных браузерных сценариев сохраняются в `build/e2e/run-*/`. По умолчанию используются тестовые ответы ИИ. Чтобы дополнительно проверить настроенный сервис на публичной выборке РИА, задайте `I16_AI_URL`, `I16_AI_MODEL`, `I16_AI_API_KEY` и выполните `I16_E2E_LIVE_AI=1 npm run test:e2e`.
 
